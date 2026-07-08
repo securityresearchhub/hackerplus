@@ -1,22 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { ChallengeInfo } from '../../core/utils/challengeEngine';
+import { SessionEngine, MissionCompleteDetails } from '../../core/utils/sessionEngine';
+import { MissionCompleteModal } from './MissionCompleteModal';
 
 interface ChallengeRuntimeProps {
   challenge: ChallengeInfo;
   onAbort: () => void;
+  onReplay: () => void;
 }
 
-export function ChallengeRuntime({ challenge, onAbort }: ChallengeRuntimeProps) {
+export function ChallengeRuntime({ challenge, onAbort, onReplay }: ChallengeRuntimeProps) {
   const [flag, setFlag] = useState('');
+  const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [completeDetails, setCompleteDetails] = useState<MissionCompleteDetails | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [objectives, setObjectives] = useState(() =>
     challenge.objectives.map((obj, idx) => ({ id: idx, text: obj, completed: false }))
   );
 
   const toggleObjective = (id: number) => {
     setObjectives(prev => prev.map(obj => obj.id === id ? { ...obj, completed: !obj.completed } : obj));
+  };
+
+  useEffect(() => {
+    setFlag('');
+    setFeedback(null);
+    setCompleteDetails(null);
+    setShowModal(false);
+    setObjectives(challenge.objectives.map((obj, idx) => ({ id: idx, text: obj, completed: false })));
+  }, [challenge.id]);
+
+  const handleSubmitFlag = () => {
+    const res = SessionEngine.submitFlag(challenge.id, flag);
+    setFeedback(res);
+    if (res.success) {
+      setCompleteDetails(res);
+      setShowModal(true);
+    }
   };
 
   return (
@@ -55,8 +78,19 @@ export function ChallengeRuntime({ challenge, onAbort }: ChallengeRuntimeProps) 
         <Card title="🚩 SUBMIT CAPTURED FLAG">
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
             <div style={{ flex: 1 }}><Input type="text" placeholder="hp_flag{v3ctor_3xploited_1234}" value={flag} onChange={(e) => setFlag(e.target.value)} leftIcon="🏁" /></div>
-            <Button variant="primary" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>SUBMIT FLAG (LOCKED)</Button>
+            <Button variant="primary" onClick={handleSubmitFlag}>SUBMIT FLAG</Button>
           </div>
+          {feedback && (
+            <div style={{
+              marginTop: '12px',
+              fontSize: 'var(--font-size-xs)',
+              fontFamily: 'var(--font-family-mono)',
+              color: feedback.success ? 'var(--color-primary)' : 'var(--color-danger)',
+              fontWeight: 'bold',
+            }}>
+              {feedback.message}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -92,6 +126,20 @@ export function ChallengeRuntime({ challenge, onAbort }: ChallengeRuntimeProps) 
           </div>
         </Card>
       </div>
+      <MissionCompleteModal
+        isOpen={showModal}
+        details={completeDetails}
+        challengeTitle={challenge.title}
+        onContinue={onAbort}
+        onReplay={() => {
+          onReplay();
+          setFlag('');
+          setFeedback(null);
+          setCompleteDetails(null);
+          setShowModal(false);
+          setObjectives(challenge.objectives.map((obj, idx) => ({ id: idx, text: obj, completed: false })));
+        }}
+      />
     </div>
   );
 }

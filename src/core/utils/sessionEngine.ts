@@ -1,10 +1,12 @@
 import { loadCompleteSession, CompleteSession, saveSessionState } from './autoSaveEngine';
-import { loadProgress, updateXp, completeCourse } from './progressEngine';
+import { loadProgress, updateXp, completeCourse, completeChallenge, saveProgress } from './progressEngine';
 import { LearningEngine, ProgressCalculation } from './learningEngine';
 import { ChallengeEngine, ChallengeInfo } from './challengeEngine';
+import { FlagEngine } from './flagEngine';
 import badgesConfig from '../../../data/badges.json';
 import coursesConfig from '../../../data/courses.json';
 import labsConfig from '../../../data/labs.json';
+import challengesConfig from '../../../data/challenges.json';
 
 export interface BadgeInfo {
   id: string;
@@ -43,6 +45,19 @@ export interface LabInfo {
   recommended: boolean;
   recent: boolean;
   inProgress: boolean;
+}
+
+export interface MissionCompleteDetails {
+  success: boolean;
+  message: string;
+  xpEarned: number;
+  prevLevel: number;
+  currentLevel: number;
+  currentRank: string;
+  prevXpPercent: number;
+  currentXpPercent: number;
+  unlockedBadge: BadgeInfo | null;
+  unlockedChallenge: { id: string; title: string } | null;
 }
 
 export interface DashboardData {
@@ -227,6 +242,102 @@ export const SessionEngine = {
    */
   replayChallenge(challengeId: string): void {
     ChallengeEngine.replayChallenge(challengeId);
+  },
+
+  /**
+   * Submits a flag for verification. Coordinates state updates and XP allocation if verified.
+   */
+  submitFlag(challengeId: string, flag: string): MissionCompleteDetails {
+    const validation = FlagEngine.validateFlag(challengeId, flag);
+
+    if (!validation.success) {
+      return {
+        success: false,
+        message: validation.message,
+        xpEarned: 0,
+        prevLevel: 0,
+        currentLevel: 0,
+        currentRank: '',
+        prevXpPercent: 0,
+        currentXpPercent: 0,
+        unlockedBadge: null,
+        unlockedChallenge: null
+      };
+    }
+
+    const { progress: oldProgress, xpProgress: oldXpProgress } = loadCompleteSession();
+    const isAlreadyCompleted = oldProgress.completedChallenges.includes(challengeId);
+
+    let xpEarned = 0;
+    let updatedProgress = { ...oldProgress };
+
+    if (!isAlreadyCompleted) {
+      const challengeConfig = (challengesConfig as any[]).find(c => c.id === challengeId);
+      xpEarned = challengeConfig ? challengeConfig.xp : 0;
+      updatedProgress = completeChallenge(oldProgress, challengeId, xpEarned);
+    }
+
+    // Check for badge unlocks
+    const solvedCount = isAlreadyCompleted
+      ? updatedProgress.completedChallenges.length
+      : updatedProgress.completedChallenges.length; // completeChallenge already pushed challengeId
+
+    let unlockedBadge: BadgeInfo | null = null;
+
+    const checkBadgeUnlock = (badgeId: string, conditionMet: boolean) => {
+      if (conditionMet && !updatedProgress.earnedBadges.includes(badgeId)) {
+        const badgeConfig = (badgesConfig as any[]).find(b => b.id === badgeId);
+        if (badgeConfig) {
+          updatedProgress.earnedBadges.push(badgeId);
+          // Award badge XP reward
+          const badgeXp = badgeConfig.xpReward || 0;
+          xpEarned += badgeXp;
+          updatedProgress = updateXp(updatedProgress, badgeXp);
+          unlockedBadge = {
+            id: badgeId,
+            name: badgeConfig.name,
+            icon: badgeConfig.icon,
+            description: badgeConfig.description
+          };
+        }
+      }
+    };
+
+    if (!isAlreadyCompleted) {
+      checkBadgeUnlock('b007', solvedCount >= 1);
+      checkBadgeUnlock('b008', solvedCount >= 10);
+      checkBadgeUnlock('b009', solvedCount >= 50);
+      saveProgress(updatedProgress);
+    }
+
+    // Reset active challenge
+    ChallengeEngine.completeChallenge(challengeId);
+
+    // Refresh complete session to get final level, rank, percentages
+    const { progress: newProgress, xpProgress: newXpProgress } = loadCompleteSession();
+
+    // Check for newly unlocked challenges
+    let unlockedChallenge: { id: string; title: string } | null = null;
+    if (!isAlreadyCompleted) {
+      if (challengeId === 'ch4') {
+        unlockedChallenge = { id: 'ch5', title: 'Golden Ticket Kerberos Attack' };
+      } else if (challengeId === 'ch7') {
+        unlockedChallenge = { id: 'ch8', title: 'Docker Socket Daemon Escape' };
+      }
+    }
+
+    return {
+      success: true,
+      message: validation.message,
+      xpEarned,
+      prevLevel: oldProgress.level,
+      currentLevel: newProgress.level,
+      currentRank: newProgress.rank,
+      prevXpPercent: oldXpProgress.progressPercentage,
+      currentXpPercent: newXpProgress.progressPercentage,
+      unlockedBadge,
+      unlockedChallenge
+    };
   },
 
   /**

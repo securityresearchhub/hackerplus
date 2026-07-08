@@ -53,8 +53,16 @@ export const ChallengeEngine = {
         targetIp: `10.10.${Math.floor(Math.random() * 254) + 1}.${Math.floor(Math.random() * 254) + 1}`,
         hint: "Inspect local service ports, configuration folders, or environment attributes for info."
       };
+      let locked = ch.locked;
+      if (ch.id === 'ch5') {
+        locked = !progress.completedChallenges.includes('ch4');
+      } else if (ch.id === 'ch8') {
+        locked = !progress.completedChallenges.includes('ch7');
+      }
+
       return {
         ...ch,
+        locked,
         completed: progress.completedChallenges.includes(ch.id),
         active: session.currentChallengeId === ch.id,
         ...details
@@ -82,6 +90,15 @@ export const ChallengeEngine = {
 
     saveSessionState({
       currentChallengeId: challengeId,
+    });
+  },
+
+  /**
+   * Completes a challenge by removing the active session from state.
+   */
+  completeChallenge(challengeId: string): void {
+    saveSessionState({
+      currentChallengeId: null,
     });
   }
 };

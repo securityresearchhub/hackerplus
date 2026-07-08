@@ -46,7 +46,13 @@ export function ChallengesPage() {
   };
 
   if (activeChallenge) {
-    return <ChallengeRuntime challenge={activeChallenge} onAbort={handleAbort} />;
+    return (
+      <ChallengeRuntime
+        challenge={activeChallenge}
+        onAbort={handleAbort}
+        onReplay={() => handleReplayMission(activeChallenge.id)}
+      />
+    );
   }
 
   return (
