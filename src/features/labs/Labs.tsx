@@ -20,6 +20,12 @@ export function LabsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
 
+  React.useEffect(() => {
+    return SessionEngine.subscribe(() => {
+      setLabs(SessionEngine.getLabsCatalog());
+    });
+  }, []);
+
   // Filter Logic
   const filteredLabs = labs.filter(lab => {
     const matchesSearch = lab.title.toLowerCase().includes(searchTerm.toLowerCase());

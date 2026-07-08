@@ -7,8 +7,14 @@ import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function AcademyPage() {
   const navigate = useNavigate();
-  const session = SessionEngine.getCurrentSession();
+  const [session, setSession] = useState(() => SessionEngine.getCurrentSession());
   const courses = SessionEngine.getCourseCatalog();
+
+  React.useEffect(() => {
+    return SessionEngine.subscribe(() => {
+      setSession(SessionEngine.getCurrentSession());
+    });
+  }, []);
 
   const categoryMap: { [key: string]: string } = {
     'web-security': 'Web Security',

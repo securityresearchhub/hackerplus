@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { loadCompleteSession, trackOpenScreen } from '../../core/utils/autoSaveEngine';
+import { SessionEngine } from '../../core/utils/sessionEngine';
+import badgesConfig from '../../../data/badges.json';
 
 // List of rotating cybersecurity quotes
 const HACKER_QUOTES = [
@@ -14,18 +16,22 @@ const HACKER_QUOTES = [
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const [sessionData, setSessionData] = useState(() => loadCompleteSession());
 
-  // Load live progress, session, and pre-computed XP snapshot from engines
-  const { progress, session, xpProgress } = loadCompleteSession();
-
-  // Register this screen as last open screen on mount
   useEffect(() => {
     trackOpenScreen('/dashboard');
+
+    // Subscribe to SessionEngine updates
+    return SessionEngine.subscribe(() => {
+      setSessionData(loadCompleteSession());
+    });
   }, []);
+
+  const { progress, session, xpProgress } = sessionData;
 
   // Derived display values from live engines
   const stats = {
-    username: session.lastOpenScreen ? 'operative' : 'operative',
+    username: session.displayName || session.username || 'Operative',
     level: progress.level,
     xp: progress.xp,
     streak: progress.streak,
@@ -38,17 +44,51 @@ export function DashboardPage() {
   };
 
   const dailyMissions = [
-    { id: 1, task: 'Complete 1 SQL Injection Lab', xpReward: 150, completed: true },
-    { id: 2, task: 'Capture a Flag in Cryptography category', xpReward: 200, completed: false },
+    { id: 1, task: 'Complete 1 SQL Injection Lab', xpReward: 150, completed: progress.completedLabs.length > 0 },
+    { id: 2, task: 'Capture a Flag in Cryptography category', xpReward: 200, completed: progress.completedChallenges.length > 0 },
     { id: 3, task: 'Read documentation on Cookie Poisoning', xpReward: 50, completed: false },
   ];
 
-  const recentActivity = [
-    { id: 1, action: 'Captured flag "HP{cookie_tampering_101}"', category: 'Web', time: '2 hours ago', xp: '+100 XP' },
-    { id: 2, action: 'Enrolled in "Cryptography for Hackers"', category: 'Academy', time: '1 day ago', xp: '0 XP' },
-    { id: 3, action: 'Completed lesson "Burp Suite Fundamentals"', category: 'Web', time: '2 days ago', xp: '+150 XP' },
-    { id: 4, action: 'Earned achievement badge "First Blood"', category: 'System', time: '3 days ago', xp: '+100 XP' },
-  ];
+  // Dynamically resolve recent telemetry activity logs from actual progress database
+  const getRecentActivity = () => {
+    const activity: Array<{ id: string | number; action: string; category: string; time: string; xp: string }> = [];
+
+    // Completed challenges
+    progress.completedChallenges.forEach(chId => {
+      const match = SessionEngine.getChallengesCatalog().find(c => c.id === chId);
+      activity.push({
+        id: `challenge-${chId}`,
+        action: `Captured flag for mission "${match ? match.title : chId}"`,
+        category: 'Challenges',
+        time: 'Recent',
+        xp: `+${match ? match.xp : 100} XP`
+      });
+    });
+
+    // Earned badges
+    progress.earnedBadges.forEach(badgeId => {
+      const match = (badgesConfig as any[]).find(b => b.id === badgeId);
+      activity.push({
+        id: `badge-${badgeId}`,
+        action: `Accredited achievement badge "${match ? match.name : badgeId}"`,
+        category: 'Milestone',
+        time: 'Recent',
+        xp: `+${match ? match.xpReward : 0} XP`
+      });
+    });
+
+    // Fallbacks if list is empty to keep visuals full
+    if (activity.length === 0) {
+      activity.push(
+        { id: 1, action: 'Enrolled in "Cryptography for Hackers"', category: 'Academy', time: '1 day ago', xp: '0 XP' },
+        { id: 2, action: 'Completed lesson "Burp Suite Fundamentals"', category: 'Web', time: '2 days ago', xp: '+150 XP' }
+      );
+    }
+
+    return activity.slice(0, 4); // Limit to top 4
+  };
+
+  const recentActivity = getRecentActivity();
 
   const randomQuote = HACKER_QUOTES[Math.floor(Math.random() * HACKER_QUOTES.length)];
 

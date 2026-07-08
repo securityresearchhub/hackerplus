@@ -80,14 +80,10 @@ export const ChallengeEngine = {
   },
 
   /**
-   * Resets the completion status of a challenge in progressEngine storage and marks it active.
-   * Keeps the total earned XP intact.
+   * Sets the completed challenge as active in session state to allow replaying.
+   * Keeps completedChallenges and total earned XP unchanged.
    */
   replayChallenge(challengeId: string): void {
-    const progress = loadProgress();
-    progress.completedChallenges = progress.completedChallenges.filter(id => id !== challengeId);
-    saveProgress(progress);
-
     saveSessionState({
       currentChallengeId: challengeId,
     });

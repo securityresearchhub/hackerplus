@@ -8,6 +8,9 @@ import coursesConfig from '../../../data/courses.json';
 import labsConfig from '../../../data/labs.json';
 import challengesConfig from '../../../data/challenges.json';
 
+type SessionListener = () => void;
+const sessionListeners = new Set<SessionListener>();
+
 export interface BadgeInfo {
   id: string;
   name: string;
@@ -73,6 +76,19 @@ export interface DashboardData {
 }
 
 export const SessionEngine = {
+  subscribe(listener: SessionListener): () => void {
+    sessionListeners.add(listener);
+    return () => {
+      sessionListeners.delete(listener);
+    };
+  },
+
+  notifyChange(): void {
+    sessionListeners.forEach(l => {
+      try { l(); } catch (e) { console.error('SessionEngine observer notify error:', e); }
+    });
+  },
+
   /**
    * Retrieves the current active session state containing progress, settings, and XP progress.
    */
@@ -130,6 +146,7 @@ export const SessionEngine = {
    */
   updateUserProfile(updates: { displayName: string; bio: string; country: string }): void {
     saveSessionState(updates);
+    this.notifyChange();
   },
 
   /**
@@ -159,6 +176,7 @@ export const SessionEngine = {
       currentChallengeId: null,
       currentLabId: null,
     });
+    this.notifyChange();
   },
 
   /**
@@ -196,12 +214,14 @@ export const SessionEngine = {
     }
     
     const nextLessonId = LearningEngine.getNextLessonId(courseId, lessonId);
-    
+
     // Update active lesson in session state
     saveSessionState({
       currentLessonId: nextLessonId,
     });
-    
+
+    this.notifyChange();
+
     return {
       xpReward,
       courseCompleted,
@@ -235,6 +255,7 @@ export const SessionEngine = {
    */
   startChallenge(challengeId: string | null): void {
     ChallengeEngine.startChallenge(challengeId);
+    this.notifyChange();
   },
 
   /**
@@ -242,6 +263,7 @@ export const SessionEngine = {
    */
   replayChallenge(challengeId: string): void {
     ChallengeEngine.replayChallenge(challengeId);
+    this.notifyChange();
   },
 
   /**
@@ -313,6 +335,8 @@ export const SessionEngine = {
     // Reset active challenge
     ChallengeEngine.completeChallenge(challengeId);
 
+    this.notifyChange();
+
     // Refresh complete session to get final level, rank, percentages
     const { progress: newProgress, xpProgress: newXpProgress } = loadCompleteSession();
 
@@ -367,6 +391,7 @@ export const SessionEngine = {
     saveSessionState({
       currentLabId: labId,
     });
+    this.notifyChange();
   }
 };
 

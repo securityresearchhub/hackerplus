@@ -9,6 +9,12 @@ export function ProfilePage() {
   // Local profile state synced with SessionEngine
   const [profile, setProfile] = useState(() => SessionEngine.getUserProfile());
 
+  React.useEffect(() => {
+    return SessionEngine.subscribe(() => {
+      setProfile(SessionEngine.getUserProfile());
+    });
+  }, []);
+
   // Edit Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({

@@ -18,6 +18,12 @@ export function ChallengesPage() {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    return SessionEngine.subscribe(() => {
+      setChallenges(SessionEngine.getChallengesCatalog());
+    });
+  }, []);
+
   // Filter logic
   const filteredMissions = challenges.filter(ch => {
     const matchesSearch = ch.title.toLowerCase().includes(search.toLowerCase());
