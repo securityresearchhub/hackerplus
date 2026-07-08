@@ -1,6 +1,7 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { SessionEngine } from '../core/utils/sessionEngine';
 
 // Import Page Components
 import { LoginPage } from '../features/auth/Login';
@@ -12,6 +13,18 @@ import { AcademyPage } from '../features/academy/Academy';
 import { LabsPage } from '../features/labs/Labs';
 import { ChallengesPage } from '../features/challenges/Challenges';
 
+/**
+ * Reusable route guard.
+ * Reads auth state exclusively from SessionEngine — UI never decides authentication.
+ * Redirects unauthenticated users to /login, preserving the requested destination.
+ */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  if (!SessionEngine.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
 // Placeholder Splash Page
 function SplashPage() {
   return (
@@ -20,7 +33,7 @@ function SplashPage() {
       <p style={{ color: '#90a4ae', fontSize: '1.2rem', marginBottom: '30px' }}>Cybersecurity Learning Platform</p>
       <div style={styles.navLinks}>
         <Link to="/login" style={styles.link}>Go to Login</Link>
-        <Link to="/dashboard" style={styles.link}>Go to Console</Link>
+        <Link to="/register" style={styles.link}>Create Account</Link>
       </div>
     </div>
   );
@@ -75,8 +88,8 @@ export function AppRouter() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* Authenticated Dashboard Shell Layout */}
-        <Route element={<AppLayout />}>
+        {/* Protected Dashboard Shell — every child requires authentication */}
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/academy" element={<AcademyPage />} />
           <Route path="/labs" element={<LabsPage />} />

@@ -4,6 +4,7 @@ import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { SessionEngine } from '../../core/utils/sessionEngine';
+import { LabConsole } from './LabConsole';
 
 const CATEGORIES = [
   'Web Security', 'Network Security', 'Linux', 'Windows', 'Active Directory',
@@ -40,15 +41,19 @@ export function LabsPage() {
   const recommendedLabs = filteredLabs.filter(lab => lab.recommended);
   const recentLabs = filteredLabs.filter(lab => lab.recent && lab.completed);
 
-  const handleStartLab = (labId: string) => {
-    SessionEngine.startLab(labId);
-    setLabs(SessionEngine.getLabsCatalog()); // refresh UI state
-    navigate('/challenges');
+  const handleStartLab = async (labId: string) => {
+    await SessionEngine.initializeLab(labId);
   };
 
-  const handleResumeActiveLab = () => {
-    navigate('/challenges');
+  const handleAbortActiveLab = async () => {
+    if (activeLab) {
+      await SessionEngine.terminateLab(activeLab.id);
+    }
   };
+
+  if (activeLab) {
+    return <LabConsole lab={activeLab} onAbort={handleAbortActiveLab} />;
+  }
 
   return (
     <div style={styles.container}>
@@ -184,33 +189,37 @@ function LabCard({ lab, onStart }: { lab: any; onStart: (labId: string) => void 
   return (
     <Card 
       title={lab.title} 
-      subtitle={`${lab.category} • Est. Time: ${lab.duration}`}
-      hoverGlow
+      subtitle={lab.locked ? "Solve preceding targets to unlock this training environment" : `${lab.category} • Est. Time: ${lab.duration}`}
+      hoverGlow={!lab.locked}
+      style={lab.locked ? styles.cardLocked : styles.cardActive}
       extra={
-        <span style={{ ...styles.badge, ...styles[diffStyle] }}>
-          {lab.difficulty}
-        </span>
+        !lab.locked && (
+          <span style={{ ...styles.badge, ...styles[diffStyle] }}>
+            {lab.difficulty}
+          </span>
+        )
       }
     >
       <div style={styles.cardInfo}>
         <div style={styles.xpBox}>
           <span style={styles.xpLabel}>REWARD:</span>
-          <span style={styles.xpVal}>{lab.xp} XP</span>
+          <span style={styles.xpVal}>{lab.locked ? '🔒' : `${lab.xp} XP`}</span>
         </div>
         <div style={styles.statusBox}>
           <span style={styles.statusLabel}>STATUS:</span>
           <span style={lab.completed ? styles.statusSuccess : styles.statusPending}>
-            {lab.completed ? 'COMPLETED' : 'UNSOLVED'}
+            {lab.locked ? 'LOCKED' : lab.completed ? 'COMPLETED' : 'UNSOLVED'}
           </span>
         </div>
       </div>
       <div style={styles.cardAction}>
         <Button 
-          variant={lab.completed ? 'secondary' : 'primary'} 
+          variant={lab.locked ? 'outline' : lab.completed ? 'secondary' : 'primary'} 
           style={{ width: '100%' }}
+          disabled={lab.locked}
           onClick={() => onStart(lab.id)}
         >
-          {lab.completed ? 'LAUNCH RETRAINING' : 'INITIALIZE TARGET'}
+          {lab.locked ? '🔒 ENCRYPTED' : lab.completed ? 'LAUNCH RETRAINING' : 'INITIALIZE TARGET'}
         </Button>
       </div>
     </Card>
@@ -218,6 +227,8 @@ function LabCard({ lab, onStart }: { lab: any; onStart: (labId: string) => void 
 }
 
 const styles = {
+  cardLocked: { opacity: 0.5, borderColor: 'rgba(255,255,255,0.02)', boxShadow: 'none' },
+  cardActive: { opacity: 1 },
   container: {
     maxWidth: '1200px',
     margin: '0 auto',

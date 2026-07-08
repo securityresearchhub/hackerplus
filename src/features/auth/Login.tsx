@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
+import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -43,9 +44,12 @@ export function LoginPage() {
     // Simulate authenticating against local-first database
     setTimeout(() => {
       setIsLoading(false);
+      // Persist auth state through SessionEngine — single source of truth
+      SessionEngine.login();
       navigate('/dashboard');
     }, 1500);
   };
+
 
   return (
     <div style={styles.authBg}>

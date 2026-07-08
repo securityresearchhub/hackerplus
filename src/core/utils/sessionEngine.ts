@@ -1,8 +1,9 @@
 import { loadCompleteSession, CompleteSession, saveSessionState } from './autoSaveEngine';
-import { loadProgress, updateXp, completeCourse, completeChallenge, saveProgress } from './progressEngine';
+import { loadProgress, updateXp, completeCourse, completeChallenge, saveProgress, completeLab } from './progressEngine';
 import { LearningEngine, ProgressCalculation } from './learningEngine';
 import { ChallengeEngine, ChallengeInfo } from './challengeEngine';
 import { FlagEngine } from './flagEngine';
+import { LabEngine } from './labEngine';
 import badgesConfig from '../../../data/badges.json';
 import coursesConfig from '../../../data/courses.json';
 import labsConfig from '../../../data/labs.json';
@@ -48,6 +49,9 @@ export interface LabInfo {
   recommended: boolean;
   recent: boolean;
   inProgress: boolean;
+  locked: boolean;
+  targetIp?: string;
+  targetUrl?: string;
 }
 
 export interface MissionCompleteDetails {
@@ -87,6 +91,30 @@ export const SessionEngine = {
     sessionListeners.forEach(l => {
       try { l(); } catch (e) { console.error('SessionEngine observer notify error:', e); }
     });
+  },
+
+  /**
+   * Returns true if the current session has an authenticated user.
+   * This is the single source of truth for auth state. UI must never decide auth.
+   */
+  isAuthenticated(): boolean {
+    return restoreSessionState().isAuthenticated === true;
+  },
+
+  /**
+   * Marks the session as authenticated. Must be called only after successful credential verification.
+   */
+  login(): void {
+    saveSessionState({ isAuthenticated: true });
+    this.notifyChange();
+  },
+
+  /**
+   * Clears authentication state and resets session back to unauthenticated.
+   */
+  logout(): void {
+    saveSessionState({ isAuthenticated: false });
+    this.notifyChange();
   },
 
   /**
@@ -368,12 +396,7 @@ export const SessionEngine = {
    * Returns the complete labs configuration catalog with dynamic completed and in-progress status.
    */
   getLabsCatalog(): LabInfo[] {
-    const { progress, session } = loadCompleteSession();
-    return (labsConfig as any[]).map(lab => ({
-      ...lab,
-      completed: progress.completedLabs.includes(lab.id),
-      inProgress: session.currentLabId === lab.id,
-    }));
+    return LabEngine.getLabs() as LabInfo[];
   },
 
   /**
@@ -392,6 +415,47 @@ export const SessionEngine = {
       currentLabId: labId,
     });
     this.notifyChange();
+  },
+
+  /**
+   * Initializes a target lab container.
+   */
+  async initializeLab(labId: string): Promise<void> {
+    await LabEngine.initializeLab(labId);
+    this.notifyChange();
+  },
+
+  /**
+   * Terminates the active target lab container.
+   */
+  async terminateLab(labId: string): Promise<void> {
+    await LabEngine.terminateLab(labId);
+    this.notifyChange();
+  },
+
+  /**
+   * Submits a lab flag for verification. Coordinates state updates and XP allocation if verified.
+   */
+  submitLabFlag(labId: string, flag: string): { success: boolean; message: string } {
+    const validation = FlagEngine.validateLabFlag(labId, flag);
+
+    if (validation.success) {
+      const progress = loadProgress();
+      const isAlreadyCompleted = progress.completedLabs.includes(labId);
+
+      if (!isAlreadyCompleted) {
+        const labConfig = labsConfig.find(l => l.id === labId);
+        const xpReward = labConfig ? labConfig.xp : 0;
+        const updatedProgress = completeLab(progress, labId, xpReward);
+        saveProgress(updatedProgress);
+      }
+
+      // Terminate container and clear active session
+      LabEngine.terminateLab(labId);
+      this.notifyChange();
+    }
+
+    return validation;
   }
 };
 

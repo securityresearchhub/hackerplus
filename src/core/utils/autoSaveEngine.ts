@@ -19,6 +19,7 @@ export interface SessionState {
   bio: string;
   country: string;
   joinedDate: string;
+  isAuthenticated: boolean;
 }
 
 export interface CompleteSession {
@@ -47,6 +48,7 @@ const DEFAULT_SESSION: SessionState = {
   bio: 'SecOps Engineer & CTF enthusiast. Specializing in reverse engineering and web vulnerability research.',
   country: 'United States',
   joinedDate: 'July 2026',
+  isAuthenticated: false,
 };
 
 /**
