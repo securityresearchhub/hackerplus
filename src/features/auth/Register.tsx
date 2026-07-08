@@ -3,11 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
+import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function RegisterPage() {
   const navigate = useNavigate();
 
-  // State variables
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,10 +17,10 @@ export function RegisterPage() {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    form?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Validate form entries
   const validateForm = () => {
     const tempErrors: typeof errors = {};
 
@@ -52,18 +52,26 @@ export function RegisterPage() {
     return Object.keys(tempErrors).length === 0;
   };
 
-  // Mock submit handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
 
-    // Mock network register call
+    // Register through SessionEngine → AuthService → localStorage
     setTimeout(() => {
+      const result = SessionEngine.register(username, email, password);
       setIsLoading(false);
-      navigate('/login');
-    }, 1500);
+
+      if (!result.success) {
+        setErrors({ form: result.error || 'Registration failed. Please try again.' });
+        return;
+      }
+
+      // Registration auto-logs the user in — go straight to dashboard
+      navigate('/dashboard');
+    }, 800);
   };
 
   return (
@@ -118,6 +126,12 @@ export function RegisterPage() {
             leftIcon="🔒"
           />
 
+          {errors.form && (
+            <div style={styles.formError}>
+              ⛔ {errors.form}
+            </div>
+          )}
+
           <Button
             type="submit"
             isLoading={isLoading}
@@ -157,6 +171,16 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: 'var(--space-3)',
+  },
+  formError: {
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    borderRadius: '6px',
+    padding: '10px 14px',
+    fontSize: '0.8rem',
+    fontFamily: 'var(--font-family-mono)',
+    color: '#ef4444',
+    letterSpacing: '0.3px',
   },
   footerText: {
     textAlign: 'center' as const,

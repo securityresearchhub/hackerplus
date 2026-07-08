@@ -7,17 +7,15 @@ import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  
-  // State variables
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Validate form entries
   const validateForm = () => {
-    const tempErrors: { email?: string; password?: string } = {};
-    
+    const tempErrors: typeof errors = {};
+
     if (!email) {
       tempErrors.email = 'Email address is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -34,21 +32,28 @@ export function LoginPage() {
     return Object.keys(tempErrors).length === 0;
   };
 
-  // Mock submit handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
 
-    // Simulate authenticating against local-first database
+    // Validate credentials through SessionEngine → AuthService → localStorage
+    // The timer simulates a real async network latency
     setTimeout(() => {
+      const result = SessionEngine.login(email, password);
       setIsLoading(false);
-      // Persist auth state through SessionEngine — single source of truth
-      SessionEngine.login();
+
+      if (!result.success) {
+        setErrors({ form: result.error || 'Authentication failed. Check your credentials.' });
+        return;
+      }
+
       navigate('/dashboard');
-    }, 1500);
+    }, 800);
   };
+
 
 
   return (
@@ -86,6 +91,12 @@ export function LoginPage() {
               Recover Key?
             </Link>
           </div>
+
+          {errors.form && (
+            <div style={styles.formError}>
+              ⛔ {errors.form}
+            </div>
+          )}
 
           <Button 
             type="submit" 
@@ -149,5 +160,15 @@ const styles = {
     color: 'var(--color-accent)',
     textDecoration: 'none',
     fontWeight: 'var(--font-weight-semibold)',
+  },
+  formError: {
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    borderRadius: '6px',
+    padding: '10px 14px',
+    fontSize: '0.8rem',
+    fontFamily: 'var(--font-family-mono)',
+    color: '#ef4444',
+    letterSpacing: '0.3px',
   },
 };

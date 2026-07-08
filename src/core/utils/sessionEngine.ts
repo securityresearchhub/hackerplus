@@ -1,13 +1,19 @@
-import { loadCompleteSession, CompleteSession, saveSessionState } from './autoSaveEngine';
+import { loadCompleteSession, CompleteSession, saveSessionState, restoreSessionState } from './autoSaveEngine';
 import { loadProgress, updateXp, completeCourse, completeChallenge, saveProgress, completeLab } from './progressEngine';
 import { LearningEngine, ProgressCalculation } from './learningEngine';
 import { ChallengeEngine, ChallengeInfo } from './challengeEngine';
 import { FlagEngine } from './flagEngine';
 import { LabEngine } from './labEngine';
+import { AuthService } from '../../services/authService';
 import badgesConfig from '../../../data/badges.json';
 import coursesConfig from '../../../data/courses.json';
 import labsConfig from '../../../data/labs.json';
 import challengesConfig from '../../../data/challenges.json';
+
+export interface AuthResponse {
+  success: boolean;
+  error?: string;
+}
 
 type SessionListener = () => void;
 const sessionListeners = new Set<SessionListener>();
@@ -102,18 +108,51 @@ export const SessionEngine = {
   },
 
   /**
-   * Marks the session as authenticated. Must be called only after successful credential verification.
+   * Validates credentials via AuthService and, on success, writes the real
+   * user identity into SessionState before marking the session as authenticated.
    */
-  login(): void {
-    saveSessionState({ isAuthenticated: true });
+  login(email: string, password: string): AuthResponse {
+    const result = AuthService.login(email, password);
+    if (!result.success || !result.user) {
+      return { success: false, error: result.error };
+    }
+    saveSessionState({
+      isAuthenticated: true,
+      username: result.user.username,
+      displayName: result.user.displayName,
+      joinedDate: result.user.joinedDate,
+    });
     this.notifyChange();
+    return { success: true };
   },
 
   /**
-   * Clears authentication state and resets session back to unauthenticated.
+   * Registers a new user via AuthService and immediately logs them in on success.
+   */
+  register(username: string, email: string, password: string): AuthResponse {
+    const result = AuthService.register(username, email, password);
+    if (!result.success || !result.user) {
+      return { success: false, error: result.error };
+    }
+    saveSessionState({
+      isAuthenticated: true,
+      username: result.user.username,
+      displayName: result.user.displayName,
+      joinedDate: result.user.joinedDate,
+    });
+    this.notifyChange();
+    return { success: true };
+  },
+
+  /**
+   * Clears authentication state and all user identity fields from the session.
    */
   logout(): void {
-    saveSessionState({ isAuthenticated: false });
+    saveSessionState({
+      isAuthenticated: false,
+      username: '',
+      displayName: '',
+    });
     this.notifyChange();
   },
 

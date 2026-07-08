@@ -1,8 +1,15 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    SessionEngine.logout();
+    navigate('/login');
+  };
 
   // Menu items list mapping label to path
   const menuItems = [
@@ -53,7 +60,7 @@ export function AppLayout() {
         </nav>
 
         <div style={styles.sidebarFooter}>
-          <Link to="/" style={styles.logoutLink}>🚪 Logout</Link>
+          <button onClick={handleLogout} style={styles.logoutBtn}>🚪 Logout</button>
         </div>
       </aside>
 
@@ -148,13 +155,17 @@ const styles = {
     padding: '20px',
     borderTop: '1px solid #1e293b',
   },
-  logoutLink: {
+  logoutBtn: {
     display: 'flex',
     alignItems: 'center',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
     color: '#ef4444',
-    textDecoration: 'none',
     fontSize: '0.9rem',
     fontFamily: '"JetBrains Mono", monospace',
+    padding: 0,
+    width: '100%',
   },
   mainArea: {
     flex: 1,
