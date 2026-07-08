@@ -4,15 +4,26 @@
   "description": "HackerPlus — Production-ready cybersecurity learning platform",
   "type": "module",
   "scripts": {
-    "dev": "npx serve . -p 3000",
-    "start": "npx serve . -p 3000",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite",
     "lint": "npx eslint src/**/*.js",
     "test": "echo \"Tests not yet configured\" && exit 0"
   },
   "keywords": ["cybersecurity", "learning", "hacking", "education"],
   "author": "HackerPlus Team",
   "license": "MIT",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.1"
+  },
   "devDependencies": {
-    "serve": "^14.0.0"
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
   }
 }
