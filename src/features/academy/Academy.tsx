@@ -1,57 +1,102 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-
-// Mock list of categories
-const CATEGORIES = [
-  'Offensive Security', 'Defensive Security', 'GRC', 'DevSecOps',
-  'Cloud Security', 'Digital Forensics', 'Malware Analysis',
-  'Networking', 'Linux', 'Windows', 'Programming'
-];
-
-// Mock Learning Paths
-const LEARNING_PATHS = [
-  { id: 'p1', title: 'Offensive Security Operative', courses: 6, level: 'Beginner to Advanced', badge: '🔴 RED TEAM' },
-  { id: 'p2', title: 'SOC Analyst Responder', courses: 5, level: 'Beginner to Intermediate', badge: '🔵 BLUE TEAM' },
-  { id: 'p3', title: 'DevSecOps Engineer', courses: 4, level: 'Intermediate', badge: '🟢 DEVSECOPS' },
-];
-
-// Mock Courses Catalog
-const COURSES = [
-  { id: 'c1', title: 'Web Application Hacking: From Zero to Hero', category: 'Offensive Security', difficulty: 'Beginner', duration: '8.5h', enrolled: true },
-  { id: 'c2', title: 'Wireshark Packet Analysis Mastery', category: 'Networking', difficulty: 'Intermediate', duration: '6h', enrolled: false },
-  { id: 'c3', title: 'Linux System Hardening Guidelines', category: 'Linux', difficulty: 'Intermediate', duration: '5.5h', enrolled: false },
-  { id: 'c4', title: 'Introduction to Malware Disassembly', category: 'Malware Analysis', difficulty: 'Advanced', duration: '12h', enrolled: false },
-  { id: 'c5', title: 'Windows Active Directory Exploits', category: 'Offensive Security', difficulty: 'Advanced', duration: '15h', enrolled: false },
-  { id: 'c6', title: 'Python Scripting for Cyber Task Automation', category: 'Programming', difficulty: 'Beginner', duration: '7h', enrolled: false },
-];
+import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function AcademyPage() {
+  const navigate = useNavigate();
+  const session = SessionEngine.getCurrentSession();
+  const courses = SessionEngine.getCourseCatalog();
+
+  const categoryMap: { [key: string]: string } = {
+    'web-security': 'Web Security',
+    'network': 'Network Security',
+    'cryptography': 'Cryptography',
+    'malware': 'Malware Analysis',
+    'osint': 'OSINT',
+  };
+
+  const CATEGORIES = Array.from(new Set(courses.map(c => c.category))).map(cat => categoryMap[cat] || cat);
+
+  const LEARNING_PATHS = [
+    { id: 'p1', title: 'Offensive Security Operative', courses: 6, level: 'Beginner to Advanced', badge: '🔴 RED TEAM' },
+    { id: 'p2', title: 'SOC Analyst Responder', courses: 5, level: 'Beginner to Intermediate', badge: '🔵 BLUE TEAM' },
+    { id: 'p3', title: 'DevSecOps Engineer', courses: 4, level: 'Intermediate', badge: '🟢 DEVSECOPS' },
+  ];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Filter logic
-  const filteredCourses = COURSES.filter(course => {
+  // Map progress metadata onto live course list
+  const coursesWithProgress = courses.map(course => {
+    const progress = SessionEngine.getCourseProgress(course.id);
+    const categoryTitle = categoryMap[course.category] || course.category;
+    return {
+      ...course,
+      categoryTitle,
+      completedCount: progress.completedCount,
+      totalCount: progress.totalCount,
+      percentage: progress.percentage,
+      enrolled: progress.percentage > 0 || session.progress.completedCourses.includes(course.id),
+      completed: session.progress.completedCourses.includes(course.id),
+    };
+  });
+
+  const enrolledCoursesCount = coursesWithProgress.filter(c => c.enrolled).length;
+  const certificatesEarned = session.progress.completedCourses.length;
+  const totalTimeTrainedHours = Math.round((session.progress.totalTimeMinutes || 0) / 60);
+
+  // Resolve current active course
+  const activeCourseId = SessionEngine.getActiveCourseId();
+  const activeCourse = activeCourseId ? coursesWithProgress.find(c => c.id === activeCourseId) : null;
+  
+  let activeNextLessonTitle = 'Course Completed';
+  if (activeCourse && activeCourseId) {
+    const nextLessonId = SessionEngine.continueCourse(activeCourseId);
+    if (nextLessonId) {
+      for (const section of activeCourse.sections) {
+        const lesson = section.lessons.find(l => l.id === nextLessonId);
+        if (lesson) {
+          activeNextLessonTitle = lesson.title;
+          break;
+        }
+      }
+    }
+  }
+
+  // Filter catalog list
+  const filteredCourses = coursesWithProgress.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || course.category === selectedCategory;
+    const matchesCategory = !selectedCategory || course.categoryTitle === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleEnroll = (courseId: string) => {
+    SessionEngine.startCourse(courseId);
+    navigate('/labs');
+  };
+
+  const handleResume = (courseId: string) => {
+    SessionEngine.continueCourse(courseId);
+    navigate('/labs');
+  };
 
   return (
     <div style={styles.container}>
       {/* Top Progress Overview */}
       <div style={styles.overviewRow}>
         <Card style={styles.overviewCard}>
-          <span style={styles.overviewVal}>3</span>
+          <span style={styles.overviewVal}>{enrolledCoursesCount}</span>
           <span style={styles.overviewLbl}>ENROLLED COURSES</span>
         </Card>
         <Card style={styles.overviewCard}>
-          <span style={styles.overviewVal}>1</span>
+          <span style={styles.overviewVal}>{certificatesEarned}</span>
           <span style={styles.overviewLbl}>CERTIFICATES EARNED</span>
         </Card>
         <Card style={styles.overviewCard}>
-          <span style={styles.overviewVal}>20h</span>
+          <span style={styles.overviewVal}>{totalTimeTrainedHours}h</span>
           <span style={styles.overviewLbl}>TOTAL TIME TRAINED</span>
         </Card>
       </div>
@@ -61,20 +106,33 @@ export function AcademyPage() {
         {/* Continue Learning */}
         <div style={styles.continueSection}>
           <h4 style={styles.sectionHeader}>📖 RESUME ACTIVE TRAINING</h4>
-          <Card style={styles.continueCard}>
-            <div style={styles.continueHeader}>
-              <span style={styles.continueTag}>Offensive Security</span>
-              <span style={styles.continuePercent}>65% Complete</span>
-            </div>
-            <h4 style={styles.continueTitle}>Web Application Hacking: From Zero to Hero</h4>
-            <p style={styles.continueLesson}>Next Lesson: <strong>Blind SQL Injection Techniques</strong></p>
-            <div style={styles.continueBarBg}>
-              <div style={{ ...styles.continueBarFill, width: '65%' }} />
-            </div>
-            <Button variant="primary" style={{ marginTop: '10px', alignSelf: 'flex-start' }}>
-              LAUNCH LAB ENVIRONMENT
-            </Button>
-          </Card>
+          {activeCourse ? (
+            <Card style={styles.continueCard}>
+              <div style={styles.continueHeader}>
+                <span style={styles.continueTag}>{activeCourse.categoryTitle}</span>
+                <span style={styles.continuePercent}>{activeCourse.percentage}% Complete</span>
+              </div>
+              <h4 style={styles.continueTitle}>{activeCourse.title}</h4>
+              <p style={styles.continueLesson}>Next Lesson: <strong>{activeNextLessonTitle}</strong></p>
+              <div style={styles.continueBarBg}>
+                <div style={{ ...styles.continueBarFill, width: `${activeCourse.percentage}%` }} />
+              </div>
+              <Button 
+                variant="primary" 
+                style={{ marginTop: '10px', alignSelf: 'flex-start' }}
+                onClick={() => handleResume(activeCourse.id)}
+              >
+                LAUNCH LAB ENVIRONMENT
+              </Button>
+            </Card>
+          ) : (
+            <Card style={styles.continueCard}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 0' }}>
+                <h4 style={styles.continueTitle}>No Active Course</h4>
+                <p style={styles.continueLesson}>Browse our catalog below and enroll in a course to begin training.</p>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Learning Paths */}
@@ -149,7 +207,7 @@ export function AcademyPage() {
               <Card 
                 key={course.id} 
                 title={course.title}
-                subtitle={`${course.category} • ${course.duration}`}
+                subtitle={`${course.categoryTitle} • ${course.duration}`}
                 hoverGlow
                 extra={
                   <span style={{
@@ -162,9 +220,21 @@ export function AcademyPage() {
               >
                 <div style={styles.courseFooter}>
                   {course.enrolled ? (
-                    <Button variant="primary" style={{ width: '100%' }}>RESUME TRAINING</Button>
+                    <Button 
+                      variant="primary" 
+                      style={{ width: '100%' }}
+                      onClick={() => handleResume(course.id)}
+                    >
+                      RESUME TRAINING
+                    </Button>
                   ) : (
-                    <Button variant="secondary" style={{ width: '100%' }}>ENROLL NOW</Button>
+                    <Button 
+                      variant="secondary" 
+                      style={{ width: '100%' }}
+                      onClick={() => handleEnroll(course.id)}
+                    >
+                      ENROLL NOW
+                    </Button>
                   )}
                 </div>
               </Card>
