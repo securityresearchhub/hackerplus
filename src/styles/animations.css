@@ -1,0 +1,190 @@
+/**
+ * HackerPlus — Keyframe Animations
+ * All global animation definitions live here.
+ */
+
+/* ── Fade ─────────────────────────────────────────────────────────── */
+@keyframes hp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes hp-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Slide ────────────────────────────────────────────────────────── */
+@keyframes hp-slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+@keyframes hp-slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0);     }
+}
+
+@keyframes hp-slide-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes hp-slide-in-down {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+/* ── Scale ────────────────────────────────────────────────────────── */
+@keyframes hp-scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+@keyframes hp-scale-out {
+  from { opacity: 1; transform: scale(1);    }
+  to   { opacity: 0; transform: scale(0.92); }
+}
+
+/* ── Pulse / Glow ─────────────────────────────────────────────────── */
+@keyframes hp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes hp-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.2),
+                0 0 20px rgba(0, 230, 118, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.5),
+                0 0 40px rgba(0, 230, 118, 0.25);
+  }
+}
+
+@keyframes hp-text-glow-pulse {
+  0%, 100% {
+    text-shadow: 0 0 6px rgba(0, 230, 118, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 12px rgba(0, 230, 118, 0.9),
+                 0 0 24px rgba(0, 230, 118, 0.5);
+  }
+}
+
+/* ── Shimmer / Skeleton ───────────────────────────────────────────── */
+@keyframes hp-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Spin ─────────────────────────────────────────────────────────── */
+@keyframes hp-spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes hp-spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg);   }
+}
+
+/* ── Bounce ───────────────────────────────────────────────────────── */
+@keyframes hp-bounce {
+  0%, 100% { transform: translateY(0);    animation-timing-function: ease-in;  }
+  50%       { transform: translateY(-8px); animation-timing-function: ease-out; }
+}
+
+/* ── Shake ────────────────────────────────────────────────────────── */
+@keyframes hp-shake {
+  0%, 100% { transform: translateX(0);   }
+  20%       { transform: translateX(-5px); }
+  40%       { transform: translateX(5px);  }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(3px);  }
+}
+
+/* ── Gradient Shift ───────────────────────────────────────────────── */
+@keyframes hp-gradient-shift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* ── Border Sweep ─────────────────────────────────────────────────── */
+@keyframes hp-border-sweep {
+  0%   { background-position: 0% 0%;   }
+  100% { background-position: 200% 0%; }
+}
+
+/* ── Progress Bar Fill ────────────────────────────────────────────── */
+@keyframes hp-progress-fill {
+  from { width: 0%; }
+}
+
+/* ── Scanline ─────────────────────────────────────────────────────── */
+@keyframes hp-scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ── Toast enter/exit ─────────────────────────────────────────────── */
+@keyframes hp-toast-in {
+  from { opacity: 0; transform: translateX(calc(100% + 24px)); }
+  to   { opacity: 1; transform: translateX(0);                  }
+}
+
+@keyframes hp-toast-out {
+  from { opacity: 1; transform: translateX(0);                  max-height: 80px; margin-bottom: var(--space-3); }
+  to   { opacity: 0; transform: translateX(calc(100% + 24px)); max-height: 0;    margin-bottom: 0; }
+}
+
+/* ── Badge Pulse ──────────────────────────────────────────────────── */
+@keyframes hp-badge-pulse {
+  0%   { transform: scale(1);   box-shadow: 0 0  0 0 rgba(180, 120, 255, 0.4); }
+  70%  { transform: scale(1.05);box-shadow: 0 0  0 8px rgba(180, 120, 255, 0); }
+  100% { transform: scale(1);   box-shadow: 0 0  0 0 rgba(180, 120, 255, 0);   }
+}
+
+/* ── Sidebar indicator ────────────────────────────────────────────── */
+@keyframes hp-indicator-slide {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* ── Cursor blink ─────────────────────────────────────────────────── */
+@keyframes hp-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Animation Utility Classes ────────────────────────────────────── */
+.animate-fade-in    { animation: hp-fade-in     0.25s ease both; }
+.animate-slide-up   { animation: hp-slide-in-up 0.25s ease both; }
+.animate-scale-in   { animation: hp-scale-in    0.20s ease both; }
+.animate-pulse      { animation: hp-pulse        2s ease-in-out infinite; }
+.animate-glow-pulse { animation: hp-glow-pulse   2s ease-in-out infinite; }
+.animate-spin       { animation: hp-spin         1s linear infinite; }
+.animate-bounce     { animation: hp-bounce        1s ease-in-out infinite; }
+.animate-shake      { animation: hp-shake        0.4s ease both; }
+
+/* Stagger helpers */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* Shimmer skeleton base */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 25%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: hp-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="HackerPlus — The premier cybersecurity learning platform. Master ethical hacking, penetration testing, and CTF challenges." />
+  <meta name="keywords" content="cybersecurity, hacking, CTF, penetration testing, ethical hacking, learning" />
+  <meta name="author" content="HackerPlus" />
+  <meta property="og:title" content="HackerPlus — Cybersecurity Learning Platform" />
+  <meta property="og:description" content="Level up your hacking skills with hands-on labs, CTF challenges, and real-world penetration testing courses." />
+  <meta property="og:type" content="website" />
+
+  <!-- Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';" />
+
+  <title>HackerPlus — Cybersecurity Learning Platform</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Global Styles (load order matters) -->
+  <link rel="stylesheet" href="src/styles/tokens.css" />
+  <link rel="stylesheet" href="src/styles/reset.css" />
+  <link rel="stylesheet" href="src/styles/typography.css" />
+  <link rel="stylesheet" href="src/styles/animations.css" />
+  <link rel="stylesheet" href="src/styles/utilities.css" />
+  <link rel="stylesheet" href="src/styles/themes/dark.css" />
+
+  <!-- App Shell Styles -->
+  <style>
+    /* ── App Shell ─────────────────────────────────────────────── */
+    #app {
+      display: grid;
+      grid-template-columns: var(--sidebar-width, 260px) 1fr;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+      background: var(--color-bg);
+      transition: grid-template-columns 0.3s ease;
+    }
+
+    #app.sidebar-collapsed {
+      grid-template-columns: 70px 1fr;
+    }
+
+    #app.auth-mode {
+      grid-template-columns: 1fr;
+    }
+
+    #sidebar-container {
+      grid-row: 1 / -1;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    #app.auth-mode #sidebar-container {
+      display: none;
+    }
+
+    #header-container {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    #app.auth-mode #header-container {
+      display: none;
+    }
+
+    #main-content {
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+    }
+
+    /* ── Loading Screen ─────────────────────────────────────────── */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loader-logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--color-primary);
+      letter-spacing: -1px;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 30px var(--color-primary);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .loader-logo span {
+      color: var(--color-accent);
+    }
+
+    .loader-bar {
+      width: 200px;
+      height: 2px;
+      background: var(--color-surface-3, #1a2232);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .loader-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+      border-radius: 1px;
+      animation: loader-fill 1.5s ease-in-out forwards;
+    }
+
+    .loader-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--color-text-secondary, #6b7280);
+      margin-top: 1rem;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes loader-fill {
+      0% { width: 0%; }
+      30% { width: 40%; }
+      60% { width: 65%; }
+      80% { width: 85%; }
+      100% { width: 100%; }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { text-shadow: 0 0 20px var(--color-primary); }
+      50% { text-shadow: 0 0 40px var(--color-primary), 0 0 60px var(--color-primary-glow, #00ff88); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── Global Page Transition ─────────────────────────────────── */
+    .page-enter {
+      animation: pageEnter 0.3s ease forwards;
+    }
+
+    @keyframes pageEnter {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Toast Container ────────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      pointer-events: none;
+    }
+
+    /* ── Modal Overlay ──────────────────────────────────────────── */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    #modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #modal-container {
+      background: var(--color-surface-2, #1a2232);
+      border: 1px solid var(--color-border, #2a3548);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 80vh;
+      overflow-y: auto;
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.2s ease;
+    }
+
+    #modal-overlay.open #modal-container {
+      transform: scale(1) translateY(0);
+    }
+
+    /* ── Scrollbar Styling ──────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-border, #2a3548); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-border-bright, #3a4a60); }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loader-logo">Hacker<span>Plus</span></div>
+    <div class="loader-bar">
+      <div class="loader-bar-fill"></div>
+    </div>
+    <div class="loader-text">Initializing systems...</div>
+  </div>
+
+  <!-- App Shell -->
+  <div id="app" class="auth-mode">
+    <!-- Sidebar (injected by Sidebar component) -->
+    <div id="sidebar-container"></div>
+
+    <!-- Header (injected by Header component) -->
+    <div id="header-container"></div>
+
+    <!-- Main Content (route views render here) -->
+    <main id="main-content" role="main" aria-live="polite"></main>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Modal Overlay -->
+  <div id="modal-overlay" role="dialog" aria-modal="true">
+    <div id="modal-container"></div>
+  </div>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="src/main.js"></script>
+
+</body>
+</html>

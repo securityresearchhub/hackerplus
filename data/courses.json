@@ -1,0 +1,232 @@
+[
+  {
+    "id": "c001",
+    "title": "Web Application Hacking: From Zero to Hero",
+    "instructor": "Alex 'n0s3c' Reeves",
+    "category": "web-security",
+    "difficulty": "beginner",
+    "duration": "8h 30m",
+    "xpReward": 1200,
+    "rating": 4.9,
+    "enrolledCount": 14820,
+    "thumbnail": "web",
+    "tags": ["SQL Injection", "XSS", "CSRF", "OWASP", "Burp Suite"],
+    "description": "Master web application penetration testing from the ground up. Learn to identify and exploit the most critical web vulnerabilities using industry-standard tools.",
+    "whatYouLearn": [
+      "Understand the OWASP Top 10 vulnerabilities",
+      "Perform SQL injection attacks on real lab environments",
+      "Exploit XSS vulnerabilities for session hijacking",
+      "Bypass authentication mechanisms",
+      "Use Burp Suite Professional for web app testing",
+      "Write professional penetration test reports"
+    ],
+    "requirements": ["Basic understanding of HTTP", "Familiarity with HTML/JavaScript", "A curiosity to break things"],
+    "sections": [
+      {
+        "id": "s001",
+        "title": "Introduction to Web Security",
+        "lessons": [
+          { "id": "l001", "title": "Course Overview & Lab Setup", "duration": "12:00", "type": "video", "xp": 50 },
+          { "id": "l002", "title": "HTTP Protocol Deep Dive", "duration": "25:00", "type": "video", "xp": 100 },
+          { "id": "l003", "title": "Burp Suite Fundamentals", "duration": "35:00", "type": "video", "xp": 150 },
+          { "id": "l004", "title": "Lab: Setting Up Your Hacking Environment", "duration": "20:00", "type": "lab", "xp": 200 }
+        ]
+      },
+      {
+        "id": "s002",
+        "title": "SQL Injection Mastery",
+        "lessons": [
+          { "id": "l005", "title": "SQL Injection Fundamentals", "duration": "40:00", "type": "video", "xp": 200 },
+          { "id": "l006", "title": "Error-Based SQL Injection", "duration": "35:00", "type": "video", "xp": 150 },
+          { "id": "l007", "title": "Blind SQL Injection Techniques", "duration": "45:00", "type": "video", "xp": 200 },
+          { "id": "l008", "title": "Lab: SQLi on DVWA", "duration": "60:00", "type": "lab", "xp": 300 }
+        ]
+      },
+      {
+        "id": "s003",
+        "title": "Cross-Site Scripting (XSS)",
+        "lessons": [
+          { "id": "l009", "title": "Reflected vs Stored XSS", "duration": "30:00", "type": "video", "xp": 150 },
+          { "id": "l010", "title": "DOM-Based XSS", "duration": "35:00", "type": "video", "xp": 150 },
+          { "id": "l011", "title": "XSS Filter Bypass Techniques", "duration": "40:00", "type": "video", "xp": 200 },
+          { "id": "l012", "title": "Lab: Cookie Theft via XSS", "duration": "45:00", "type": "lab", "xp": 300 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c002",
+    "title": "Network Penetration Testing Bootcamp",
+    "instructor": "Maya 'phantom' Chen",
+    "category": "network",
+    "difficulty": "intermediate",
+    "duration": "12h 45m",
+    "xpReward": 2000,
+    "rating": 4.8,
+    "enrolledCount": 9340,
+    "thumbnail": "network",
+    "tags": ["Nmap", "Metasploit", "Wireshark", "Pivoting", "Active Directory"],
+    "description": "A comprehensive bootcamp covering network reconnaissance, exploitation, post-exploitation, and lateral movement through enterprise networks.",
+    "whatYouLearn": [
+      "Perform network reconnaissance with Nmap & Masscan",
+      "Exploit network services with Metasploit Framework",
+      "Capture and analyze network traffic with Wireshark",
+      "Perform man-in-the-middle attacks",
+      "Attack Active Directory environments",
+      "Pivot through internal networks"
+    ],
+    "requirements": ["Completion of any beginner course", "Basic networking knowledge (TCP/IP)", "Linux command line basics"],
+    "sections": [
+      {
+        "id": "s101",
+        "title": "Network Reconnaissance",
+        "lessons": [
+          { "id": "l101", "title": "Network Scanning with Nmap", "duration": "45:00", "type": "video", "xp": 200 },
+          { "id": "l102", "title": "Service Enumeration Techniques", "duration": "40:00", "type": "video", "xp": 200 },
+          { "id": "l103", "title": "Lab: Mapping a Network", "duration": "90:00", "type": "lab", "xp": 400 }
+        ]
+      },
+      {
+        "id": "s102",
+        "title": "Exploitation with Metasploit",
+        "lessons": [
+          { "id": "l104", "title": "Metasploit Framework Architecture", "duration": "35:00", "type": "video", "xp": 200 },
+          { "id": "l105", "title": "Exploiting Common Vulnerabilities", "duration": "55:00", "type": "video", "xp": 300 },
+          { "id": "l106", "title": "Post-Exploitation Techniques", "duration": "50:00", "type": "video", "xp": 300 },
+          { "id": "l107", "title": "Lab: Pwn the Machine", "duration": "120:00", "type": "lab", "xp": 500 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c003",
+    "title": "Cryptography for Hackers",
+    "instructor": "Dr. Sofia 'c1ph3r' Volkov",
+    "category": "cryptography",
+    "difficulty": "intermediate",
+    "duration": "10h 15m",
+    "xpReward": 1800,
+    "rating": 4.9,
+    "enrolledCount": 6120,
+    "thumbnail": "crypto",
+    "tags": ["AES", "RSA", "Hash Functions", "Padding Oracles", "Elliptic Curves"],
+    "description": "Understand cryptographic primitives from an attacker's perspective. Learn to identify and exploit cryptographic weaknesses in real applications.",
+    "whatYouLearn": [
+      "Understand symmetric and asymmetric encryption",
+      "Exploit padding oracle vulnerabilities",
+      "Perform hash length extension attacks",
+      "Break weak RSA implementations",
+      "Analyze and attack custom cryptography"
+    ],
+    "requirements": ["Basic Python programming", "High school mathematics", "Curiosity about how encryption works"],
+    "sections": [
+      {
+        "id": "s201",
+        "title": "Cryptography Fundamentals",
+        "lessons": [
+          { "id": "l201", "title": "Introduction to Cryptography", "duration": "30:00", "type": "video", "xp": 150 },
+          { "id": "l202", "title": "Symmetric Encryption: AES Deep Dive", "duration": "50:00", "type": "video", "xp": 250 },
+          { "id": "l203", "title": "Asymmetric Encryption: RSA Internals", "duration": "45:00", "type": "video", "xp": 250 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c004",
+    "title": "Malware Analysis & Reverse Engineering",
+    "instructor": "Kevin 'malwolf' Torres",
+    "category": "malware",
+    "difficulty": "advanced",
+    "duration": "15h 20m",
+    "xpReward": 3000,
+    "rating": 4.7,
+    "enrolledCount": 4890,
+    "thumbnail": "malware",
+    "tags": ["IDA Pro", "Ghidra", "Assembly", "Dynamic Analysis", "Sandbox"],
+    "description": "Dive into the world of malware analysis. Learn static and dynamic analysis techniques to understand, classify, and defeat malicious software.",
+    "whatYouLearn": [
+      "Set up a safe malware analysis lab",
+      "Perform static analysis with Ghidra and IDA Pro",
+      "Analyze malware behavior with dynamic analysis",
+      "Understand common malware techniques (persistence, evasion, C2)",
+      "Write YARA rules for malware detection"
+    ],
+    "requirements": ["Strong programming background", "Assembly language basics", "Completion of 2+ intermediate courses"],
+    "sections": [
+      {
+        "id": "s301",
+        "title": "Malware Analysis Lab Setup",
+        "lessons": [
+          { "id": "l301", "title": "Building a Safe Analysis Environment", "duration": "40:00", "type": "video", "xp": 200 },
+          { "id": "l302", "title": "Static Analysis Fundamentals", "duration": "55:00", "type": "video", "xp": 300 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c005",
+    "title": "OSINT: Open Source Intelligence Mastery",
+    "instructor": "Isabella 'trace' Park",
+    "category": "osint",
+    "difficulty": "beginner",
+    "duration": "7h 00m",
+    "xpReward": 1000,
+    "rating": 4.8,
+    "enrolledCount": 11230,
+    "thumbnail": "osint",
+    "tags": ["Google Dorks", "Shodan", "Maltego", "Social Media", "Dark Web"],
+    "description": "Learn to gather intelligence from publicly available sources like a professional. Master tools and techniques used by investigators, red teamers, and security researchers.",
+    "whatYouLearn": [
+      "Master advanced Google dorking techniques",
+      "Use Shodan to find exposed systems",
+      "Build entity graphs with Maltego",
+      "Perform social media intelligence (SOCMINT)",
+      "Navigate the dark web safely"
+    ],
+    "requirements": ["Basic internet knowledge", "No programming required"],
+    "sections": [
+      {
+        "id": "s401",
+        "title": "OSINT Fundamentals",
+        "lessons": [
+          { "id": "l401", "title": "Introduction to OSINT", "duration": "20:00", "type": "video", "xp": 100 },
+          { "id": "l402", "title": "Google Dorking Masterclass", "duration": "45:00", "type": "video", "xp": 200 },
+          { "id": "l403", "title": "Shodan: Internet-Wide Scanning", "duration": "40:00", "type": "video", "xp": 200 },
+          { "id": "l404", "title": "Lab: OSINT Investigation Challenge", "duration": "60:00", "type": "lab", "xp": 300 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c006",
+    "title": "Active Directory Attacks & Defense",
+    "instructor": "Marcus 'r00t' Williams",
+    "category": "network",
+    "difficulty": "advanced",
+    "duration": "18h 30m",
+    "xpReward": 3500,
+    "rating": 4.9,
+    "enrolledCount": 7650,
+    "thumbnail": "ad",
+    "tags": ["Kerberoasting", "Pass-the-Hash", "DCSync", "BloodHound", "Mimikatz"],
+    "description": "The definitive guide to attacking and defending Active Directory environments. Covers the full attack chain from initial access to domain dominance.",
+    "whatYouLearn": [
+      "Enumerate AD environments with BloodHound",
+      "Perform Kerberoasting and AS-REP Roasting",
+      "Execute Pass-the-Hash and Pass-the-Ticket attacks",
+      "Achieve domain dominance via DCSync",
+      "Implement AD hardening and detection strategies"
+    ],
+    "requirements": ["Network Penetration Testing course", "Windows administration knowledge"],
+    "sections": [
+      {
+        "id": "s501",
+        "title": "Active Directory Fundamentals",
+        "lessons": [
+          { "id": "l501", "title": "AD Architecture for Attackers", "duration": "45:00", "type": "video", "xp": 250 },
+          { "id": "l502", "title": "Kerberos Protocol in Depth", "duration": "60:00", "type": "video", "xp": 300 }
+        ]
+      }
+    ]
+  }
+]
