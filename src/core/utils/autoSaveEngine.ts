@@ -14,6 +14,11 @@ export interface SessionState {
   currentChallengeId: string | null;
   lastOpenScreen: string;
   userSettings: UserSettings;
+  username: string;
+  displayName: string;
+  bio: string;
+  country: string;
+  joinedDate: string;
 }
 
 export interface CompleteSession {
@@ -37,6 +42,11 @@ const DEFAULT_SESSION: SessionState = {
   currentChallengeId: null,
   lastOpenScreen: '/dashboard',
   userSettings: DEFAULT_SETTINGS,
+  username: 'neo_matrix',
+  displayName: 'Thomas Anderson',
+  bio: 'SecOps Engineer & CTF enthusiast. Specializing in reverse engineering and web vulnerability research.',
+  country: 'United States',
+  joinedDate: 'July 2026',
 };
 
 /**

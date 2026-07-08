@@ -3,32 +3,11 @@ import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
-
-// Mock earned badges structure
-const mockBadges = [
-  { id: 1, emoji: '🩸', name: 'First Blood', desc: 'Completed first lesson' },
-  { id: 2, emoji: '📜', name: 'Script Starter', desc: 'Reached 500 XP' },
-  { id: 3, emoji: '🔥', name: 'On Fire', desc: '7-day streak milestone' },
-  { id: 4, emoji: '🔐', name: 'Cipher Breaker', desc: 'Completed Cryptography' },
-];
+import { SessionEngine } from '../../core/utils/sessionEngine';
 
 export function ProfilePage() {
-  // Local profile state
-  const [profile, setProfile] = useState({
-    username: 'neo_matrix',
-    displayName: 'Thomas Anderson',
-    bio: 'SecOps Engineer & CTF enthusiast. Specializing in reverse engineering and web vulnerability research.',
-    country: 'United States',
-    joinedDate: 'July 2026',
-    level: 12,
-    xp: 2450,
-    nextLevelXp: 3000,
-    streak: 8,
-    rank: 'Packet Sniffer',
-    completedCourses: 3,
-    completedLabs: 14,
-    completedChallenges: 27,
-  });
+  // Local profile state synced with SessionEngine
+  const [profile, setProfile] = useState(() => SessionEngine.getUserProfile());
 
   // Edit Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -40,16 +19,17 @@ export function ProfilePage() {
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    setProfile(prev => ({
-      ...prev,
+    SessionEngine.updateUserProfile({
       displayName: editForm.displayName,
       bio: editForm.bio,
       country: editForm.country,
-    }));
+    });
+    // Refresh local state with updated session values
+    setProfile(SessionEngine.getUserProfile());
     setIsEditOpen(false);
   };
 
-  const xpPercent = Math.min(100, Math.round((profile.xp / profile.nextLevelXp) * 100));
+  const xpPercent = profile.xpPercent;
 
   return (
     <div style={styles.container}>
@@ -156,13 +136,19 @@ export function ProfilePage() {
       <div style={{ marginTop: '30px' }}>
         <h4 style={styles.sectionHeader}>🎖️ UNLOCKED ACHIEVEMENT BADGES</h4>
         <div style={styles.badgesGrid}>
-          {mockBadges.map(badge => (
-            <Card key={badge.id} style={styles.badgeCard}>
-              <span style={styles.badgeEmoji}>{badge.emoji}</span>
-              <h5 style={styles.badgeName}>{badge.name}</h5>
-              <p style={styles.badgeDesc}>{badge.desc}</p>
-            </Card>
-          ))}
+          {profile.earnedBadges.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-mono)', fontSize: 'var(--font-size-sm)' }}>
+              No achievements unlocked yet. Complete lessons and labs to earn badges.
+            </div>
+          ) : (
+            profile.earnedBadges.map(badge => (
+              <Card key={badge.id} style={styles.badgeCard}>
+                <span style={styles.badgeEmoji}>{badge.icon}</span>
+                <h5 style={styles.badgeName}>{badge.name}</h5>
+                <p style={styles.badgeDesc}>{badge.description}</p>
+              </Card>
+            ))
+          )}
         </div>
       </div>
 
