@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
+import { loadCompleteSession, trackOpenScreen } from '../../core/utils/autoSaveEngine';
 
 // List of rotating cybersecurity quotes
 const HACKER_QUOTES = [
@@ -14,13 +15,26 @@ const HACKER_QUOTES = [
 export function DashboardPage() {
   const navigate = useNavigate();
 
-  // Mock dashboard details
+  // Load live progress, session, and pre-computed XP snapshot from engines
+  const { progress, session, xpProgress } = loadCompleteSession();
+
+  // Register this screen as last open screen on mount
+  useEffect(() => {
+    trackOpenScreen('/dashboard');
+  }, []);
+
+  // Derived display values from live engines
   const stats = {
-    username: 'neo_matrix',
-    level: 12,
-    xp: 2450,
-    streak: 8,
-    rank: 'Packet Sniffer',
+    username: session.lastOpenScreen ? 'operative' : 'operative',
+    level: progress.level,
+    xp: progress.xp,
+    streak: progress.streak,
+    rank: progress.rank,
+    completedLabs: progress.completedLabs.length,
+    completedChallenges: progress.completedChallenges.length,
+    completedCourses: progress.completedCourses.length,
+    progressPercentage: xpProgress.progressPercentage,
+    xpNeededForNextLevel: xpProgress.xpNeededForNextLevel,
   };
 
   const dailyMissions = [
@@ -76,6 +90,7 @@ export function DashboardPage() {
           <div style={styles.statContent}>
             <span style={styles.statLabel}>TOTAL XP RECORDED</span>
             <span style={styles.statValue}>{stats.xp} XP</span>
+            <span style={styles.xpSubtext}>{stats.xpNeededForNextLevel} XP to level up • {stats.progressPercentage}%</span>
           </div>
         </Card>
       </div>
@@ -161,6 +176,27 @@ export function DashboardPage() {
                   <span style={styles.missionReward}>+{mis.xpReward} XP</span>
                 </div>
               ))}
+            </div>
+          </Card>
+
+          {/* Completion Stats */}
+          <Card
+            title="📊 OPERATIVE STATS"
+            subtitle="LIVE COMPLETION METRICS"
+          >
+            <div style={styles.completionGrid}>
+              <div style={styles.completionItem}>
+                <span style={styles.completionVal}>{stats.completedLabs}</span>
+                <span style={styles.completionLbl}>🧪 Labs Done</span>
+              </div>
+              <div style={styles.completionItem}>
+                <span style={styles.completionVal}>{stats.completedChallenges}</span>
+                <span style={styles.completionLbl}>🚩 Flags Captured</span>
+              </div>
+              <div style={styles.completionItem}>
+                <span style={styles.completionVal}>{stats.completedCourses}</span>
+                <span style={styles.completionLbl}>🎓 Courses Done</span>
+              </div>
             </div>
           </Card>
 
@@ -447,5 +483,32 @@ const styles = {
   quickBtn: {
     width: '100%',
     textAlign: 'center' as const,
+  },
+  xpSubtext: {
+    fontSize: '0.7rem',
+    color: 'var(--color-text-muted)',
+    fontFamily: 'var(--font-family-mono)',
+  },
+  completionGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '10px',
+    textAlign: 'center' as const,
+  },
+  completionItem: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  completionVal: {
+    fontSize: 'var(--font-size-xl)',
+    fontWeight: 'var(--font-weight-bold)',
+    color: 'var(--color-primary)',
+  },
+  completionLbl: {
+    fontSize: '0.7rem',
+    color: 'var(--color-text-muted)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
   },
 };
