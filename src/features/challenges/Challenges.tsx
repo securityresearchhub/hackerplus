@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import challengesData from '../../../data/challenges.json';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
+import { SessionEngine } from '../../core/utils/sessionEngine';
+import { ChallengeRuntime } from './ChallengeRuntime';
 
 const CATEGORIES = [
   'Web Exploitation', 'Linux Privilege Escalation', 'Windows Privilege Escalation',
@@ -11,15 +13,41 @@ const CATEGORIES = [
 ];
 
 export function ChallengesPage() {
+  const navigate = useNavigate();
+  const [challenges, setChallenges] = useState(() => SessionEngine.getChallengesCatalog());
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
   // Filter logic
-  const filteredMissions = challengesData.filter(ch => {
+  const filteredMissions = challenges.filter(ch => {
     const matchesSearch = ch.title.toLowerCase().includes(search.toLowerCase());
     const matchesCat = !selectedCat || ch.category === selectedCat;
     return matchesSearch && matchesCat;
   });
+
+  const handleStartMission = (challengeId: string) => {
+    SessionEngine.startChallenge(challengeId);
+    setChallenges(SessionEngine.getChallengesCatalog()); // update UI state
+    navigate('/challenges');
+  };
+
+  const handleReplayMission = (challengeId: string) => {
+    SessionEngine.replayChallenge(challengeId);
+    setChallenges(SessionEngine.getChallengesCatalog()); // update UI state
+    navigate('/challenges');
+  };
+
+  const activeChallenge = challenges.find(ch => ch.active);
+
+  const handleAbort = () => {
+    SessionEngine.startChallenge(null);
+    setChallenges(SessionEngine.getChallengesCatalog());
+    navigate('/challenges');
+  };
+
+  if (activeChallenge) {
+    return <ChallengeRuntime challenge={activeChallenge} onAbort={handleAbort} />;
+  }
 
   return (
     <div style={styles.container}>
@@ -88,6 +116,7 @@ export function ChallengesPage() {
                       variant={ch.completed ? 'secondary' : ch.locked ? 'outline' : 'primary'}
                       disabled={ch.locked}
                       style={{ width: '100%' }}
+                      onClick={() => ch.completed ? handleReplayMission(ch.id) : handleStartMission(ch.id)}
                     >
                       {ch.locked ? '🔒 DECRYPT STAGE FIRST' : ch.completed ? 'REPLAY MISSION' : 'START MISSION'}
                     </Button>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
-import { Modal } from '../../components/common/Modal';
+import { Modal } from '../../components/common/Modal.tsx';
 import { Input } from '../../components/common/Input';
 import { SessionEngine } from '../../core/utils/sessionEngine';
 

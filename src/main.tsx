@@ -12,3 +12,9 @@ ReactDOM.createRoot(rootElement).render(
     <App />
   </React.StrictMode>
 );
+
+// Dismiss loading screen after mounting
+const loader = document.getElementById('loading-screen');
+if (loader) {
+  loader.classList.add('hidden');
+}

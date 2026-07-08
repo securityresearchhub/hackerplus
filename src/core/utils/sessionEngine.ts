@@ -1,8 +1,10 @@
 import { loadCompleteSession, CompleteSession, saveSessionState } from './autoSaveEngine';
 import { loadProgress, updateXp, completeCourse } from './progressEngine';
 import { LearningEngine, ProgressCalculation } from './learningEngine';
+import { ChallengeEngine, ChallengeInfo } from './challengeEngine';
 import badgesConfig from '../../../data/badges.json';
 import coursesConfig from '../../../data/courses.json';
+import labsConfig from '../../../data/labs.json';
 
 export interface BadgeInfo {
   id: string;
@@ -27,6 +29,20 @@ export interface UserProfile {
   completedLabs: number;
   completedChallenges: number;
   earnedBadges: BadgeInfo[];
+}
+
+export interface LabInfo {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: string;
+  duration: string;
+  xp: number;
+  completed: boolean;
+  featured: boolean;
+  recommended: boolean;
+  recent: boolean;
+  inProgress: boolean;
 }
 
 export interface DashboardData {
@@ -190,6 +206,56 @@ export const SessionEngine = {
    */
   getActiveCourseId(): string | null {
     return LearningEngine.getActiveCourseId();
+  },
+
+  /**
+   * Returns the complete challenges configuration catalog.
+   */
+  getChallengesCatalog(): ChallengeInfo[] {
+    return ChallengeEngine.getChallenges();
+  },
+
+  /**
+   * Starts a challenge by setting it as active in the session state.
+   */
+  startChallenge(challengeId: string | null): void {
+    ChallengeEngine.startChallenge(challengeId);
+  },
+
+  /**
+   * Resets the completion status of a challenge and sets it as active.
+   */
+  replayChallenge(challengeId: string): void {
+    ChallengeEngine.replayChallenge(challengeId);
+  },
+
+  /**
+   * Returns the complete labs configuration catalog with dynamic completed and in-progress status.
+   */
+  getLabsCatalog(): LabInfo[] {
+    const { progress, session } = loadCompleteSession();
+    return (labsConfig as any[]).map(lab => ({
+      ...lab,
+      completed: progress.completedLabs.includes(lab.id),
+      inProgress: session.currentLabId === lab.id,
+    }));
+  },
+
+  /**
+   * Resolves the current active lab ID.
+   */
+  getActiveLabId(): string | null {
+    const { session } = loadCompleteSession();
+    return session.currentLabId;
+  },
+
+  /**
+   * Starts a lab by setting it as active in the session state.
+   */
+  startLab(labId: string): void {
+    saveSessionState({
+      currentLabId: labId,
+    });
   }
 };
 

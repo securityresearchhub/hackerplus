@@ -21,13 +21,14 @@ export function AcademyPage() {
   const CATEGORIES = Array.from(new Set(courses.map(c => c.category))).map(cat => categoryMap[cat] || cat);
 
   const LEARNING_PATHS = [
-    { id: 'p1', title: 'Offensive Security Operative', courses: 6, level: 'Beginner to Advanced', badge: '🔴 RED TEAM' },
-    { id: 'p2', title: 'SOC Analyst Responder', courses: 5, level: 'Beginner to Intermediate', badge: '🔵 BLUE TEAM' },
-    { id: 'p3', title: 'DevSecOps Engineer', courses: 4, level: 'Intermediate', badge: '🟢 DEVSECOPS' },
+    { id: 'p1', title: 'Offensive Security Operative', courses: 6, level: 'Beginner to Advanced', badge: '🔴 RED TEAM', startingCourseId: 'c001' },
+    { id: 'p2', title: 'SOC Analyst Responder', courses: 5, level: 'Beginner to Intermediate', badge: '🔵 BLUE TEAM', startingCourseId: 'c004' },
+    { id: 'p3', title: 'DevSecOps Engineer', courses: 4, level: 'Intermediate', badge: '🟢 DEVSECOPS', startingCourseId: 'c005' },
   ];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [activeCourseId, setActiveCourseId] = useState(() => SessionEngine.getActiveCourseId());
 
   // Map progress metadata onto live course list
   const coursesWithProgress = courses.map(course => {
@@ -49,7 +50,6 @@ export function AcademyPage() {
   const totalTimeTrainedHours = Math.round((session.progress.totalTimeMinutes || 0) / 60);
 
   // Resolve current active course
-  const activeCourseId = SessionEngine.getActiveCourseId();
   const activeCourse = activeCourseId ? coursesWithProgress.find(c => c.id === activeCourseId) : null;
   
   let activeNextLessonTitle = 'Course Completed';
@@ -75,11 +75,14 @@ export function AcademyPage() {
 
   const handleEnroll = (courseId: string) => {
     SessionEngine.startCourse(courseId);
+    setActiveCourseId(courseId);
     navigate('/labs');
   };
 
   const handleResume = (courseId: string) => {
+    SessionEngine.startCourse(courseId);
     SessionEngine.continueCourse(courseId);
+    setActiveCourseId(courseId);
     navigate('/labs');
   };
 
@@ -146,7 +149,13 @@ export function AcademyPage() {
                   <h5 style={styles.pathTitle}>{path.title}</h5>
                   <p style={styles.pathMeta}>{path.courses} Courses • {path.level}</p>
                 </div>
-                <Button variant="outline" size="sm">START</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleEnroll(path.startingCourseId)}
+                >
+                  START
+                </Button>
               </div>
             ))}
           </div>

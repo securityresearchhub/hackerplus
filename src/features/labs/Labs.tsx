@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import labsData from '../../../data/labs.json';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
+import { SessionEngine } from '../../core/utils/sessionEngine';
 
 const CATEGORIES = [
   'Web Security', 'Network Security', 'Linux', 'Windows', 'Active Directory',
@@ -13,23 +14,35 @@ const CATEGORIES = [
 const DIFFICULTIES = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
 export function LabsPage() {
+  const navigate = useNavigate();
+  const [labs, setLabs] = useState(() => SessionEngine.getLabsCatalog());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
 
   // Filter Logic
-  const filteredLabs = labsData.filter(lab => {
+  const filteredLabs = labs.filter(lab => {
     const matchesSearch = lab.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || lab.category === selectedCategory;
     const matchesDifficulty = selectedDifficulty === 'All' || lab.difficulty === selectedDifficulty;
     return matchesSearch && matchesCategory && matchesDifficulty;
   });
 
-  // Extract subsets from static labs list
-  const activeLab = labsData.find(lab => lab.inProgress);
+  // Extract subsets from dynamic labs list
+  const activeLab = labs.find(lab => lab.inProgress);
   const featuredLabs = filteredLabs.filter(lab => lab.featured);
   const recommendedLabs = filteredLabs.filter(lab => lab.recommended);
   const recentLabs = filteredLabs.filter(lab => lab.recent && lab.completed);
+
+  const handleStartLab = (labId: string) => {
+    SessionEngine.startLab(labId);
+    setLabs(SessionEngine.getLabsCatalog()); // refresh UI state
+    navigate('/challenges');
+  };
+
+  const handleResumeActiveLab = () => {
+    navigate('/challenges');
+  };
 
   return (
     <div style={styles.container}>
@@ -43,7 +56,7 @@ export function LabsPage() {
               Category: <strong>{activeLab.category}</strong> | Est. Time: <strong>{activeLab.duration}</strong> | Value: <strong>{activeLab.xp} XP</strong>
             </p>
           </div>
-          <Button variant="primary">RESUME CONTAINER</Button>
+          <Button variant="primary" onClick={handleResumeActiveLab}>RESUME CONTAINER</Button>
         </div>
       )}
 
@@ -66,12 +79,12 @@ export function LabsPage() {
                 const isActive = selectedDifficulty === diff;
                 return (
                   <button
-                    key={diff}
-                    onClick={() => setSelectedDifficulty(diff)}
-                    style={{
-                      ...styles.diffBtn,
-                      ...(isActive ? styles.diffBtnActive : {})
-                    }}
+                     key={diff}
+                     onClick={() => setSelectedDifficulty(diff)}
+                     style={{
+                       ...styles.diffBtn,
+                       ...(isActive ? styles.diffBtnActive : {})
+                     }}
                   >
                     {diff}
                   </button>
@@ -111,7 +124,7 @@ export function LabsPage() {
               <h4 style={styles.sectionHeader}>⭐ FEATURED CONTAINER LABS ({featuredLabs.length})</h4>
               <div style={styles.labsGrid}>
                 {featuredLabs.map(lab => (
-                  <LabCard key={lab.id} lab={lab} />
+                  <LabCard key={lab.id} lab={lab} onStart={handleStartLab} />
                 ))}
               </div>
             </div>
@@ -123,7 +136,7 @@ export function LabsPage() {
               <h4 style={styles.sectionHeader}>💡 RECOMMENDED MISSIONS ({recommendedLabs.length})</h4>
               <div style={styles.labsGrid}>
                 {recommendedLabs.map(lab => (
-                  <LabCard key={lab.id} lab={lab} />
+                  <LabCard key={lab.id} lab={lab} onStart={handleStartLab} />
                 ))}
               </div>
             </div>
@@ -160,7 +173,7 @@ export function LabsPage() {
 }
 
 // Inner reusable Card component for Labs
-function LabCard({ lab }: { lab: typeof labsData[0] }) {
+function LabCard({ lab, onStart }: { lab: any; onStart: (labId: string) => void }) {
   const diffStyle = lab.difficulty.toLowerCase() as keyof typeof styles;
   return (
     <Card 
@@ -186,7 +199,11 @@ function LabCard({ lab }: { lab: typeof labsData[0] }) {
         </div>
       </div>
       <div style={styles.cardAction}>
-        <Button variant={lab.completed ? 'secondary' : 'primary'} style={{ width: '100%' }}>
+        <Button 
+          variant={lab.completed ? 'secondary' : 'primary'} 
+          style={{ width: '100%' }}
+          onClick={() => onStart(lab.id)}
+        >
           {lab.completed ? 'LAUNCH RETRAINING' : 'INITIALIZE TARGET'}
         </Button>
       </div>
