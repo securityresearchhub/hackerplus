@@ -1,0 +1,5 @@
+{
+  "baseXp": 1000,
+  "growthExponent": 1.2,
+  "maxLevel": 100
+}

@@ -10,6 +10,7 @@ import { ProfilePage } from '../features/profile/Profile';
 import { DashboardPage } from '../features/dashboard/Dashboard';
 import { AcademyPage } from '../features/academy/Academy';
 import { LabsPage } from '../features/labs/Labs';
+import { ChallengesPage } from '../features/challenges/Challenges';
 
 // Placeholder Splash Page
 function SplashPage() {
@@ -26,15 +27,6 @@ function SplashPage() {
 }
 
 // Remaining Inner Pages wrapped by AppLayout
-function ChallengesPage() {
-  return (
-    <div style={styles.innerPage}>
-      <h3>CTF Challenges</h3>
-      <p style={styles.text}>Capture the Flag points by analyzing and cracking targets across various difficulty brackets.</p>
-    </div>
-  );
-}
-
 function ToolsPage() {
   return (
     <div style={styles.innerPage}>
@@ -44,6 +36,7 @@ function ToolsPage() {
   );
 }
 
+// Other Inner Pages...
 function NotesPage() {
   return (
     <div style={styles.innerPage}>
