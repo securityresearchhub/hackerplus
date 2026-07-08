@@ -2,10 +2,13 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 
-// Import New Authentication Pages
+// Import Page Components
 import { LoginPage } from '../features/auth/Login';
 import { RegisterPage } from '../features/auth/Register';
 import { ForgotPasswordPage } from '../features/auth/ForgotPassword';
+import { ProfilePage } from '../features/profile/Profile';
+import { DashboardPage } from '../features/dashboard/Dashboard';
+import { AcademyPage } from '../features/academy/Academy';
 
 // Placeholder Splash Page
 function SplashPage() {
@@ -21,25 +24,7 @@ function SplashPage() {
   );
 }
 
-// Inner Pages wrapped by AppLayout
-function DashboardPage() {
-  return (
-    <div style={styles.innerPage}>
-      <h3>Console Dashboard</h3>
-      <p style={styles.text}>Welcome back, operative. Complete your daily challenges and browse the academy catalog to begin your training sessions.</p>
-    </div>
-  );
-}
-
-function AcademyPage() {
-  return (
-    <div style={styles.innerPage}>
-      <h3>Academy Catalog</h3>
-      <p style={styles.text}>Select a path to build your skills in penetration testing, malware analysis, or web application hacking.</p>
-    </div>
-  );
-}
-
+// Remaining Inner Pages wrapped by AppLayout
 function LabsPage() {
   return (
     <div style={styles.innerPage}>
@@ -81,15 +66,6 @@ function LeaderboardPage() {
     <div style={styles.innerPage}>
       <h3>Global Leaderboard</h3>
       <p style={styles.text}>View where you stand compared to other security operatives in XP and achievements globally.</p>
-    </div>
-  );
-}
-
-function ProfilePage() {
-  return (
-    <div style={styles.innerPage}>
-      <h3>User Profile</h3>
-      <p style={styles.text}>Manage your public achievements, view earned badges, and inspect your total XP logs.</p>
     </div>
   );
 }
