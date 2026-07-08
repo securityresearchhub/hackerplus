@@ -2,7 +2,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 
-// Placeholder Pages
+// Import New Authentication Pages
+import { LoginPage } from '../features/auth/Login';
+import { RegisterPage } from '../features/auth/Register';
+import { ForgotPasswordPage } from '../features/auth/ForgotPassword';
+
+// Placeholder Splash Page
 function SplashPage() {
   return (
     <div style={styles.fullscreenPage}>
@@ -12,15 +17,6 @@ function SplashPage() {
         <Link to="/login" style={styles.link}>Go to Login</Link>
         <Link to="/dashboard" style={styles.link}>Go to Console</Link>
       </div>
-    </div>
-  );
-}
-
-function LoginPage() {
-  return (
-    <div style={styles.fullscreenPage}>
-      <h2 style={{ marginBottom: '20px' }}>Sign In to HackerPlus</h2>
-      <Link to="/dashboard" style={styles.link}>Access Dashboard (Mock Login)</Link>
     </div>
   );
 }
@@ -115,6 +111,8 @@ export function AppRouter() {
         {/* Unauthenticated Routes */}
         <Route path="/" element={<SplashPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         {/* Authenticated Dashboard Shell Layout */}
         <Route element={<AppLayout />}>
