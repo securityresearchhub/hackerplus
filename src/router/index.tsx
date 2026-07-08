@@ -9,6 +9,7 @@ import { ForgotPasswordPage } from '../features/auth/ForgotPassword';
 import { ProfilePage } from '../features/profile/Profile';
 import { DashboardPage } from '../features/dashboard/Dashboard';
 import { AcademyPage } from '../features/academy/Academy';
+import { LabsPage } from '../features/labs/Labs';
 
 // Placeholder Splash Page
 function SplashPage() {
@@ -25,15 +26,6 @@ function SplashPage() {
 }
 
 // Remaining Inner Pages wrapped by AppLayout
-function LabsPage() {
-  return (
-    <div style={styles.innerPage}>
-      <h3>Sandboxed Labs</h3>
-      <p style={styles.text}>Deploy active containers and run real-world vulnerability checks in isolated, browser-based terminals.</p>
-    </div>
-  );
-}
-
 function ChallengesPage() {
   return (
     <div style={styles.innerPage}>
