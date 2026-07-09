@@ -5,10 +5,18 @@ import { ChallengeEngine, ChallengeInfo } from './challengeEngine';
 import { FlagEngine } from './flagEngine';
 import { LabEngine } from './labEngine';
 import { AuthService } from '../../services/authService';
+import type { LabSessionStatus } from './labSessionService';
+import { PracticeEngine } from './practiceEngine';
+import type { ModuleInfo, LessonWithPractice, PracticeLabRef, PracticeChallengeRef, QuizQuestion } from './practiceEngine';
+import { TopicEngine } from './topicEngine';
+import type { TrackInfo, TopicInfo, TopicProgress, RequiredItem, CompleteTopicResult } from './topicEngine';
 import badgesConfig from '../../../data/badges.json';
 import coursesConfig from '../../../data/courses.json';
 import labsConfig from '../../../data/labs.json';
 import challengesConfig from '../../../data/challenges.json';
+
+export type { ModuleInfo, LessonWithPractice, PracticeLabRef, PracticeChallengeRef, QuizQuestion };
+export type { TrackInfo, TopicInfo, TopicProgress, RequiredItem, CompleteTopicResult };
 
 export interface AuthResponse {
   success: boolean;
@@ -457,10 +465,11 @@ export const SessionEngine = {
   },
 
   /**
-   * Initializes a target lab container.
+   * Initializes a target lab container via the Lab Session API.
+   * Accepts an optional status callback so the caller can update provisioning UI in real time.
    */
-  async initializeLab(labId: string): Promise<void> {
-    await LabEngine.initializeLab(labId);
+  async initializeLab(labId: string, onStatusUpdate?: (status: LabSessionStatus) => void): Promise<void> {
+    await LabEngine.initializeLab(labId, onStatusUpdate);
     this.notifyChange();
   },
 
@@ -495,7 +504,124 @@ export const SessionEngine = {
     }
 
     return validation;
-  }
+  },
+
+  // ── Course Practice Engine ────────────────────────────────────────────────
+
+  /**
+   * Returns the modules (sections) for a course.
+   * Each module includes lesson count for progress display.
+   */
+  getModules(courseId: string): ModuleInfo[] {
+    return PracticeEngine.getModules(courseId);
+  },
+
+  /**
+   * Returns fully enriched lessons for a module.
+   * Each lesson includes practiceLabs, challenges, and quiz questions.
+   */
+  getLessons(moduleId: string, courseId: string): LessonWithPractice[] {
+    return PracticeEngine.getLessons(moduleId, courseId);
+  },
+
+  /**
+   * Returns the practice labs linked to a specific lesson.
+   */
+  getPracticeLabs(lessonId: string): PracticeLabRef[] {
+    return PracticeEngine.getPracticeLabs(lessonId);
+  },
+
+  /**
+   * Returns the challenges linked to a specific lesson.
+   */
+  getChallenges(lessonId: string): PracticeChallengeRef[] {
+    return PracticeEngine.getChallenges(lessonId);
+  },
+
+  /**
+   * Returns the next lesson after the given lesson, fully enriched.
+   * Returns null when at the last lesson of the course.
+   */
+  getNextLesson(currentLessonId: string, courseId: string): LessonWithPractice | null {
+    return PracticeEngine.getNextLesson(currentLessonId, courseId);
+  },
+
+  /**
+   * Returns the quiz questions for a specific lesson.
+   */
+  getQuiz(lessonId: string): QuizQuestion[] {
+    return PracticeEngine.getQuiz(lessonId);
+  },
+
+  // ── Topic Practice Engine (HP-028) ─────────────────────────────────
+
+  /**
+   * Returns all tracks with live completion counts.
+   */
+  getTracks(): TrackInfo[] {
+    return TopicEngine.getTracks();
+  },
+
+  /**
+   * Returns fully enriched topics for a track (locked state, labs, quiz, challenges).
+   */
+  getTopics(trackId: string): TopicInfo[] {
+    return TopicEngine.getTopics(trackId);
+  },
+
+  /**
+   * Returns a single enriched topic by ID, or null.
+   */
+  getTopicById(topicId: string): TopicInfo | null {
+    return TopicEngine.getTopicById(topicId);
+  },
+
+  /**
+   * Marks a topic complete, awards XP, notifies all subscribers.
+   */
+  completeTopic(topicId: string): CompleteTopicResult {
+    const result = TopicEngine.completeTopic(topicId);
+    this.notifyChange();
+    return result;
+  },
+
+  /**
+   * Returns the next topic in the same track after the given topic.
+   */
+  getNextTopic(topicId: string): TopicInfo | null {
+    return TopicEngine.getNextTopic(topicId);
+  },
+
+  /**
+   * Returns completion stats for a track.
+   */
+  getTrackProgress(trackId: string): { completed: number; total: number; percentage: number } {
+    return TopicEngine.getTrackProgress(trackId);
+  },
+
+  /**
+   * Records that the lab for a topic has been completed, then notifies.
+   */
+  markTopicLabComplete(topicId: string): void {
+    TopicEngine.markLabComplete(topicId);
+    this.notifyChange();
+  },
+
+  /**
+   * Records a quiz score for a topic (pass threshold: 70%), then notifies.
+   */
+  recordTopicQuizResult(topicId: string, score: number): void {
+    TopicEngine.recordQuizResult(topicId, score);
+    this.notifyChange();
+  },
+
+  /**
+   * Records that the challenge for a topic has been completed, then notifies.
+   */
+  markTopicChallengeComplete(topicId: string): void {
+    TopicEngine.markChallengeComplete(topicId);
+    this.notifyChange();
+  },
 };
 
 export default SessionEngine;

@@ -136,7 +136,31 @@ export const LearningEngine = {
       return lessonIds[currentIndex + 1];
     }
     return null;
-  }
+  },
+
+  /**
+   * Returns a flat list of every lesson in a course, each tagged with its
+   * parent sectionId. Used by PracticeEngine to avoid re-implementing
+   * section traversal logic.
+   */
+  getAllLessons(courseId: string): Array<{
+    id: string;
+    title: string;
+    duration: string;
+    type: string;
+    xp: number;
+    sectionId: string;
+  }> {
+    const config = coursesConfig.find(c => c.id === courseId);
+    if (!config) return [];
+    const result: Array<{ id: string; title: string; duration: string; type: string; xp: number; sectionId: string }> = [];
+    for (const section of config.sections) {
+      for (const lesson of section.lessons) {
+        result.push({ ...lesson, sectionId: section.id });
+      }
+    }
+    return result;
+  },
 };
 
 export default LearningEngine;

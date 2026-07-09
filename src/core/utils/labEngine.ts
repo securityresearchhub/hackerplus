@@ -1,7 +1,12 @@
+/**
+ * LabEngine — Frontend lab lifecycle manager.
+ * Delegates all container provisioning to LabSessionService (real API).
+ * Never calls MockDockerProvider directly. Never embeds infrastructure logic.
+ */
 import { loadProgress, saveProgress } from './progressEngine';
 import { restoreSessionState, saveSessionState } from './autoSaveEngine';
+import { LabSessionService, type LabSessionStatus } from './labSessionService';
 import labsConfig from '../../../data/labs.json';
-import { ActiveLabProvider } from './labProvider';
 
 export interface LabInfo {
   id: string;
@@ -28,7 +33,7 @@ export const LabEngine = {
     const completedList = progress.completedLabs || [];
 
     return (labsConfig as any[]).map((lab, idx) => {
-      // Progression lock logic: A level remains locked until the preceding level is completed
+      // Progression lock logic: a level remains locked until the preceding level is completed
       let locked = false;
       if (idx > 0) {
         const prevLab = labsConfig[idx - 1];
@@ -54,45 +59,94 @@ export const LabEngine = {
         locked: false,
         completed,
         inProgress,
-        targetIp: inProgress ? (session as any).targetIp : undefined,
-        targetUrl: inProgress ? (session as any).targetUrl : undefined,
+        // Surface the real API-assigned URL if this lab is currently active
+        targetIp: inProgress ? (session.activeLabUrl ? new URL(session.activeLabUrl).hostname : undefined) : undefined,
+        targetUrl: inProgress ? session.activeLabUrl ?? undefined : undefined,
       };
     });
   },
 
   /**
-   * Initializes a target lab by calling the active LabProvider driver.
+   * Initializes a target lab session via the Lab Session API.
+   * Awaits the full provisioning poll — only resolves once the session is running
+   * and the target URL is saved. This ensures notifyChange() fires with a complete state.
    */
-  async initializeLab(labId: string): Promise<void> {
+  async initializeLab(
+    labId: string,
+    onStatusUpdate?: (status: LabSessionStatus) => void
+  ): Promise<string> {
     const session = restoreSessionState();
-    if (session.currentLabId) {
-      await ActiveLabProvider.terminate(session.currentLabId);
+    const userId = session.username || 'anonymous';
+
+    // Terminate any existing session first
+    if (session.activeLabSessionId && session.currentLabId) {
+      await LabEngine.terminateLab(session.currentLabId).catch(() => {});
     }
 
-    const result = await ActiveLabProvider.provision(labId);
+    // Start new session — API returns immediately with labSessionId (and optionally a running status)
+    const startResult = await LabSessionService.startSession(labId, userId);
+    const { labSessionId } = startResult;
 
+    // ── Shortcut: server returned an already-running session ─────────────────
+    // POST /api/lab/start returns status:'running' + labUrl when the registry
+    // already has an active session for this user+lab. Use it directly —
+    // no polling needed.
+    if (startResult.status === 'running' && startResult.labUrl) {
+      saveSessionState({
+        currentLabId: labId,
+        activeLabSessionId: labSessionId,
+        activeLabUrl: startResult.labUrl,
+        activeLabExpiresAt: startResult.expiresAt ?? null,
+      });
+      return labSessionId;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // New session: persist the ID, then poll until the container is ready
     saveSessionState({
       currentLabId: labId,
-      ...({
-        targetIp: result.targetIp,
-        targetUrl: result.targetUrl,
-      } as any)
+      activeLabSessionId: labSessionId,
+      activeLabUrl: null,
+      activeLabExpiresAt: null,
     });
+
+    // AWAIT the full polling cycle — initializeLab does NOT resolve until running
+    let finalStatus;
+    try {
+      finalStatus = await LabSessionService.waitUntilRunning(labSessionId, onStatusUpdate);
+    } catch (err) {
+      // Provisioning failed — clean up session state and re-throw for UI
+      saveSessionState({ currentLabId: null, activeLabSessionId: null, activeLabUrl: null });
+      throw err;
+    }
+
+    // Session is confirmed running — persist the real target URL
+    if (finalStatus.labUrl) {
+      saveSessionState({
+        activeLabUrl: finalStatus.labUrl,
+        activeLabExpiresAt: finalStatus.expiresAt,
+      });
+    }
+
+    return labSessionId;
   },
 
+
   /**
-   * Terminates the active lab session and updates session state registry.
+   * Terminates the active lab session via the API and clears session state.
    */
-  async terminateLab(labId: string): Promise<void> {
-    await ActiveLabProvider.terminate(labId);
+  async terminateLab(_labId: string): Promise<void> {
+    const session = restoreSessionState();
+    if (session.activeLabSessionId) {
+      await LabSessionService.stopSession(session.activeLabSessionId).catch(() => {});
+    }
     saveSessionState({
       currentLabId: null,
-      ...({
-        targetIp: undefined,
-        targetUrl: undefined,
-      } as any)
+      activeLabSessionId: null,
+      activeLabUrl: null,
+      activeLabExpiresAt: null,
     });
-  }
+  },
 };
 
 export default LabEngine;

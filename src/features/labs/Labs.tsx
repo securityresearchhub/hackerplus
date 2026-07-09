@@ -5,6 +5,7 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { SessionEngine } from '../../core/utils/sessionEngine';
 import { LabConsole } from './LabConsole';
+import type { LabSessionStatus } from '../../core/utils/labSessionService';
 
 const CATEGORIES = [
   'Web Security', 'Network Security', 'Linux', 'Windows', 'Active Directory',
@@ -41,8 +42,21 @@ export function LabsPage() {
   const recommendedLabs = filteredLabs.filter(lab => lab.recommended);
   const recentLabs = filteredLabs.filter(lab => lab.recent && lab.completed);
 
+  const [provisioning, setProvisioning] = useState<{ labId: string; status: string } | null>(null);
+  const [provisionError, setProvisionError] = useState<string | null>(null);
+
   const handleStartLab = async (labId: string) => {
-    await SessionEngine.initializeLab(labId);
+    setProvisionError(null);
+    setProvisioning({ labId, status: 'Allocating container...' });
+    try {
+      await SessionEngine.initializeLab(labId, (s: LabSessionStatus) => {
+        setProvisioning({ labId, status: s.status === 'provisioning' ? 'Provisioning target environment...' : 'Container ready — loading console...' });
+      });
+    } catch (err: any) {
+      setProvisionError(err?.message ?? 'Failed to start lab. Is the server running?');
+    } finally {
+      setProvisioning(null);
+    }
   };
 
   const handleAbortActiveLab = async () => {
@@ -51,13 +65,34 @@ export function LabsPage() {
     }
   };
 
+  if (provisioning) {
+    return (
+      <div style={styles.provisioningScreen}>
+        <div style={styles.provisioningBox}>
+          <div style={styles.provisioningSpinner}>⚙️</div>
+          <h3 style={styles.provisioningTitle}>INITIALIZING TARGET</h3>
+          <p style={styles.provisioningStatus}>{provisioning.status}</p>
+          <p style={styles.provisioningNote}>Your isolated container is being provisioned. This takes a few seconds.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (activeLab) {
     return <LabConsole lab={activeLab} onAbort={handleAbortActiveLab} />;
   }
 
   return (
     <div style={styles.container}>
+      {/* Provision Error Banner */}
+      {provisionError && (
+        <div style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 18px', marginBottom: '8px', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#ef4444' }}>
+          ⛔ {provisionError} — Make sure the Lab Server is running: <code>npm run server</code>
+        </div>
+      )}
+
       {/* Continue Last Lab Banner */}
+
       {activeLab && (
         <div style={styles.activeBanner}>
           <div style={styles.activeText}>
@@ -474,5 +509,45 @@ const styles = {
     fontSize: '3rem',
     marginBottom: '15px',
     display: 'block',
+  },
+  provisioningScreen: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '60vh',
+  },
+  provisioningBox: {
+    textAlign: 'center' as const,
+    padding: '48px 56px',
+    backgroundColor: 'var(--color-bg-card)',
+    border: '1px solid rgba(0, 212, 255, 0.25)',
+    borderRadius: 'var(--radius-lg)',
+    boxShadow: '0 0 40px rgba(0, 212, 255, 0.05)',
+    maxWidth: '480px',
+  },
+  provisioningSpinner: {
+    fontSize: '3rem',
+    display: 'block',
+    marginBottom: '20px',
+    animation: 'spin 2s linear infinite',
+  },
+  provisioningTitle: {
+    fontSize: '1rem',
+    fontFamily: 'var(--font-family-mono)',
+    color: 'var(--color-accent)',
+    letterSpacing: '2px',
+    marginBottom: '12px',
+  },
+  provisioningStatus: {
+    fontSize: '0.85rem',
+    fontFamily: 'var(--font-family-mono)',
+    color: 'var(--color-primary)',
+    marginBottom: '8px',
+  },
+  provisioningNote: {
+    fontSize: '0.8rem',
+    color: 'var(--color-text-muted)',
+    lineHeight: 1.6,
+    margin: 0,
   },
 };

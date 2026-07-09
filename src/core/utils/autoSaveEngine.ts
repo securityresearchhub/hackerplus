@@ -20,6 +20,12 @@ export interface SessionState {
   country: string;
   joinedDate: string;
   isAuthenticated: boolean;
+  /** Active real lab session ID from the Lab Session API */
+  activeLabSessionId: string | null;
+  /** Resolved target URL for the active lab */
+  activeLabUrl: string | null;
+  /** Expiry ISO timestamp for the active session */
+  activeLabExpiresAt: string | null;
 }
 
 export interface CompleteSession {
@@ -49,6 +55,9 @@ const DEFAULT_SESSION: SessionState = {
   country: 'United States',
   joinedDate: 'July 2026',
   isAuthenticated: false,
+  activeLabSessionId: null,
+  activeLabUrl: null,
+  activeLabExpiresAt: null,
 };
 
 /**

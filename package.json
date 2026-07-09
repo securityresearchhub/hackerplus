@@ -5,25 +5,39 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "npx tsx server/index.ts",
     "build": "vite build",
     "preview": "vite preview",
     "start": "vite",
     "lint": "npx eslint src/**/*.js",
     "test": "echo \"Tests not yet configured\" && exit 0"
   },
-  "keywords": ["cybersecurity", "learning", "hacking", "education"],
+  "keywords": [
+    "cybersecurity",
+    "learning",
+    "hacking",
+    "education"
+  ],
   "author": "HackerPlus Team",
   "license": "MIT",
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.1"
+    "react-router-dom": "^6.23.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "tsx": "^4.23.0",
     "typescript": "^5.4.5",
-    "vite": "^5.2.11"
+    "vite": "^5.4.5"
   }
 }
