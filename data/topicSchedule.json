@@ -1,0 +1,49 @@
+{
+  "schedules": [
+    {
+      "id": "schedule-web-fundamentals",
+      "name": "Web Security Fundamentals (6 weeks)",
+      "description": "OWASP Top 10 essentials with hands-on lab practice. Covers SQL Injection through path traversal.",
+      "entries": [
+        { "day": 1,  "week": 1, "topicId": "topic-web-01-01", "title": "SQL Injection — Login Bypass" },
+        { "day": 2,  "week": 1, "topicId": "topic-web-01-02", "title": "Stored XSS — Session Hijacking" },
+        { "day": 3,  "week": 1, "topicId": "topic-web-01-03", "title": "Reflected XSS — Filter Bypass" },
+        { "day": 8,  "week": 2, "topicId": "topic-web-01-04", "title": "DOM-Based XSS — Source & Sink Analysis" },
+        { "day": 9,  "week": 2, "topicId": "topic-web-01-05", "title": "CSRF — State-Changing Request Forgery" },
+        { "day": 10, "week": 2, "topicId": "topic-web-01-06", "title": "Path Traversal — Sensitive File Read" }
+      ]
+    },
+    {
+      "id": "schedule-advanced-web-api",
+      "name": "Advanced Web & API Security (8 weeks)",
+      "description": "Server-side attack chains and API exploitation. SSRF, XXE, SSTI, and OWASP API Top 10.",
+      "entries": [
+        { "day": 1,  "week": 1, "topicId": "topic-web-02-01", "title": "SSRF — Internal Network Pivoting" },
+        { "day": 2,  "week": 1, "topicId": "topic-web-02-02", "title": "XXE — External Entity File Read" },
+        { "day": 3,  "week": 1, "topicId": "topic-web-02-03", "title": "SSTI — Template Engine RCE" },
+        { "day": 8,  "week": 2, "topicId": "topic-web-02-04", "title": "File Upload Bypass — Web Shell Deployment" },
+        { "day": 9,  "week": 2, "topicId": "topic-web-02-05", "title": "HTTP Request Smuggling — CL.TE / TE.CL" },
+        { "day": 15, "week": 3, "topicId": "topic-api-01-01", "title": "BOLA / IDOR — Object-Level Auth Bypass" },
+        { "day": 16, "week": 3, "topicId": "topic-api-01-02", "title": "Broken API Authentication — Token Leakage" },
+        { "day": 17, "week": 3, "topicId": "topic-api-01-03", "title": "Mass Assignment — Parameter Pollution" },
+        { "day": 22, "week": 4, "topicId": "topic-api-01-04", "title": "NoSQL Injection — MongoDB Auth Bypass" },
+        { "day": 23, "week": 4, "topicId": "topic-api-01-05", "title": "JWT — Algorithm Confusion & None Attack" }
+      ]
+    },
+    {
+      "id": "schedule-fullstack-security",
+      "name": "Full Stack Security (4 weeks — Demo)",
+      "description": "Quick cross-domain tour: Web, Linux PrivEsc, Active Directory, and Cryptography.",
+      "entries": [
+        { "day": 1,  "week": 1, "topicId": "topic-web-01-01", "title": "SQL Injection — Login Bypass" },
+        { "day": 2,  "week": 1, "topicId": "topic-web-01-02", "title": "Stored XSS — Session Hijacking" },
+        { "day": 3,  "week": 1, "topicId": "topic-web-02-01", "title": "SSRF — Internal Network Pivoting" },
+        { "day": 8,  "week": 2, "topicId": "topic-linux-01-01", "title": "SUID Binary Exploitation" },
+        { "day": 9,  "week": 2, "topicId": "topic-linux-01-02", "title": "Cron Job — Writable Script Hijacking" },
+        { "day": 15, "week": 3, "topicId": "topic-ad-01-01", "title": "BloodHound — Attack Path Enumeration" },
+        { "day": 16, "week": 3, "topicId": "topic-ad-01-02", "title": "Kerberoasting — SPN Ticket Cracking" },
+        { "day": 22, "week": 4, "topicId": "topic-crypto-01-01", "title": "Weak Cipher Attack — ECB Mode & RC4" }
+      ]
+    }
+  ]
+}

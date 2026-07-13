@@ -22,6 +22,13 @@ export function LabsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
 
+  // Resolve Batch and Today's Practice for Instructor-Led Training (HP-030.1)
+  const session = SessionEngine.getCurrentSession().session;
+  const username = session.username;
+  const userBatch = SessionEngine.getBatches().find(b => b.studentUsernames.includes(username));
+  const todayPractice = userBatch ? SessionEngine.getTodayPractice(userBatch.id) : null;
+  const activeTopic = todayPractice?.topic;
+
   React.useEffect(() => {
     return SessionEngine.subscribe(() => {
       setLabs(SessionEngine.getLabsCatalog());
@@ -29,12 +36,18 @@ export function LabsPage() {
   }, []);
 
   // Filter Logic
-  const filteredLabs = labs.filter(lab => {
+  let filteredLabs = labs.filter(lab => {
     const matchesSearch = lab.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || lab.category === selectedCategory;
     const matchesDifficulty = selectedDifficulty === 'All' || lab.difficulty === selectedDifficulty;
     return matchesSearch && matchesCategory && matchesDifficulty;
   });
+
+  // If in an active batch with today's topic, filter labs to only show today's topic labs
+  if (userBatch && activeTopic) {
+    const todayLabIds = activeTopic.labs.map(l => l.id);
+    filteredLabs = filteredLabs.filter(lab => todayLabIds.includes(lab.id));
+  }
 
   // Extract subsets from dynamic labs list
   const activeLab = labs.find(lab => lab.inProgress);
@@ -84,6 +97,19 @@ export function LabsPage() {
 
   return (
     <div style={styles.container}>
+      {/* ILT Banner */}
+      {userBatch && activeTopic && (
+        <div style={styles.iltBanner}>
+          <span style={styles.iltBannerLabel}>⚡ INSTRUCTOR-LED LIVE LABS</span>
+          <h4 style={styles.iltBannerTitle}>
+            Today's Target Topic: <strong>{activeTopic.title}</strong>
+          </h4>
+          <p style={styles.iltBannerDesc}>
+            Displaying only the sandbox targets assigned for today's training in {userBatch.name}.
+          </p>
+        </div>
+      )}
+
       {/* Provision Error Banner */}
       {provisionError && (
         <div style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 18px', marginBottom: '8px', fontFamily: 'var(--font-family-mono)', fontSize: '0.8rem', color: '#ef4444' }}>
@@ -221,6 +247,39 @@ export function LabsPage() {
 // Inner reusable Card component for Labs
 function LabCard({ lab, onStart }: { lab: any; onStart: (labId: string) => void }) {
   const diffStyle = lab.difficulty.toLowerCase() as keyof typeof styles;
+
+  // premiumLocked takes visual priority over progression lock
+  if (lab.premiumLocked) {
+    return (
+      <Card
+        title="🔒 Premium Lab"
+        subtitle="Upgrade your plan to unlock this lab"
+        hoverGlow={false}
+        style={styles.cardPremiumLocked}
+      >
+        <div style={styles.cardInfo}>
+          <div style={styles.xpBox}>
+            <span style={styles.xpLabel}>REWARD:</span>
+            <span style={styles.xpVal}>⭐ {lab.xp} XP</span>
+          </div>
+          <div style={styles.statusBox}>
+            <span style={styles.statusLabel}>STATUS:</span>
+            <span style={styles.statusPremium}>PREMIUM</span>
+          </div>
+        </div>
+        <div style={styles.cardAction}>
+          <Button
+            variant="outline"
+            style={{ width: '100%', ...styles.premiumBtn }}
+            disabled
+          >
+            ⭐ UPGRADE TO UNLOCK
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card 
       title={lab.title} 
@@ -264,6 +323,20 @@ function LabCard({ lab, onStart }: { lab: any; onStart: (labId: string) => void 
 const styles = {
   cardLocked: { opacity: 0.5, borderColor: 'rgba(255,255,255,0.02)', boxShadow: 'none' },
   cardActive: { opacity: 1 },
+  cardPremiumLocked: {
+    opacity: 0.8,
+    borderColor: 'rgba(255, 179, 0, 0.25)',
+    boxShadow: '0 0 12px rgba(255, 179, 0, 0.06)',
+  },
+  statusPremium: {
+    color: 'var(--color-warning)',
+    fontWeight: 'var(--font-weight-bold)' as const,
+  },
+  premiumBtn: {
+    borderColor: 'rgba(255, 179, 0, 0.35)',
+    color: 'rgba(255, 179, 0, 0.85)',
+    cursor: 'default' as const,
+  },
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
@@ -548,6 +621,33 @@ const styles = {
     fontSize: '0.8rem',
     color: 'var(--color-text-muted)',
     lineHeight: 1.6,
+    margin: 0,
+  },
+  iltBanner: {
+    backgroundColor: 'rgba(0, 230, 118, 0.05)',
+    border: '1px solid rgba(0, 230, 118, 0.2)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '16px 20px',
+    marginBottom: '8px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  iltBannerLabel: {
+    fontFamily: 'var(--font-family-mono)',
+    fontSize: 'var(--font-size-xs)',
+    color: 'var(--color-primary)',
+    fontWeight: 'var(--font-weight-bold)',
+    letterSpacing: '1px',
+  },
+  iltBannerTitle: {
+    fontSize: 'var(--font-size-md)',
+    color: 'var(--color-text-primary)',
+    margin: 0,
+  },
+  iltBannerDesc: {
+    fontSize: 'var(--font-size-xs)',
+    color: 'var(--color-text-muted)',
     margin: 0,
   },
 };

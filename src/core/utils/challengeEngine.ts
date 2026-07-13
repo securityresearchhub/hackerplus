@@ -1,5 +1,6 @@
 import { loadProgress, saveProgress } from './progressEngine';
 import { restoreSessionState, saveSessionState } from './autoSaveEngine';
+import { EntitlementEngine } from './entitlementEngine';
 import challengesConfig from '../../../data/challenges.json';
 
 export interface ChallengeInfo {
@@ -9,7 +10,10 @@ export interface ChallengeInfo {
   difficulty: string;
   xp: number;
   duration: string;
+  /** Progression lock — prerequisite challenge not yet completed */
   locked: boolean;
+  /** Entitlement lock — requires a paid plan to access */
+  premiumLocked: boolean;
   completed: boolean;
   active: boolean;
   briefing: string;
@@ -40,12 +44,19 @@ const CHALLENGE_DETAILS: { [id: string]: { briefing: string; objectives: string[
 };
 
 export const ChallengeEngine = {
+  /** Returns the ordered list of all challenge IDs. Used by SessionEngine for entitlement checks. */
+  allChallengeIds(): string[] {
+    return (challengesConfig as any[]).map(c => c.id);
+  },
+
   /**
    * Retrieves the challenges list from the catalog mapped with dynamic completion and active state.
    */
   getChallenges(): ChallengeInfo[] {
     const progress = loadProgress();
     const session = restoreSessionState();
+    const ids = this.allChallengeIds();
+
     return (challengesConfig as any[]).map(ch => {
       const details = CHALLENGE_DETAILS[ch.id] || {
         briefing: `Gain root access inside the target ${ch.category} node. Locate vulnerability vectors and extract the flag value to solve the objective.`,
@@ -60,9 +71,13 @@ export const ChallengeEngine = {
         locked = !progress.completedChallenges.includes('ch7');
       }
 
+      // Entitlement lock — plan-based access gate (independent of progression)
+      const premiumLocked = !EntitlementEngine.canAccessChallenge(ch.id, ids);
+
       return {
         ...ch,
         locked,
+        premiumLocked,
         completed: progress.completedChallenges.includes(ch.id),
         active: session.currentChallengeId === ch.id,
         ...details

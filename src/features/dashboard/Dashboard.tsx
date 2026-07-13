@@ -17,6 +17,7 @@ const HACKER_QUOTES = [
 export function DashboardPage() {
   const navigate = useNavigate();
   const [sessionData, setSessionData] = useState(() => loadCompleteSession());
+  const [entitlement, setEntitlement] = useState(() => SessionEngine.getEntitlementState());
 
   useEffect(() => {
     trackOpenScreen('/dashboard');
@@ -24,10 +25,25 @@ export function DashboardPage() {
     // Subscribe to SessionEngine updates
     return SessionEngine.subscribe(() => {
       setSessionData(loadCompleteSession());
+      setEntitlement(SessionEngine.getEntitlementState());
     });
   }, []);
 
   const { progress, session, xpProgress } = sessionData;
+
+  const PLAN_NAMES: Record<string, string> = {
+    community: 'Community',
+    student_premium: 'Student Premium',
+    partner_premium: 'Partner Premium',
+    enterprise: 'Enterprise',
+  };
+  const isPremium = entitlement.plan !== 'community';
+  const planDisplayName = PLAN_NAMES[entitlement.plan] ?? entitlement.plan;
+
+  // Resolve Batch & Today's Practice for Instructor-Led Training (HP-030.1)
+  const username = session.username;
+  const userBatch = SessionEngine.getBatches().find(b => b.studentUsernames.includes(username));
+  const todayPractice = userBatch ? SessionEngine.getTodayPractice(userBatch.id) : null;
 
   // Derived display values from live engines
   const stats = {
@@ -139,6 +155,40 @@ export function DashboardPage() {
       <div style={styles.splitGrid}>
         {/* Left Side: Learning & Activities */}
         <div style={styles.leftColumn}>
+          {/* Today's Practice Card (Instructor-Led Training) */}
+          {userBatch && todayPractice && (
+            <Card
+              title="🎯 TODAY'S PRACTICE"
+              subtitle={`INSTRUCTOR-LED TRAINING // ${userBatch.name.toUpperCase()}`}
+              hoverGlow
+            >
+              {todayPractice.topic ? (
+                <div style={styles.trainingItem}>
+                  <div style={styles.trainingMeta}>
+                    <span style={styles.tag}>{todayPractice.topic.difficulty}</span>
+                    <span style={styles.progressText}>{todayPractice.topic.estimatedMinutes} mins</span>
+                  </div>
+                  <h4 style={styles.trainingTitle}>{todayPractice.topic.title}</h4>
+                  <p style={styles.trainingDesc}>
+                    Reward: <strong>{todayPractice.topic.xp} XP</strong> | Labs: <strong>{todayPractice.topic.labs.length}</strong> | Challenges: <strong>{todayPractice.topic.challenges.length}</strong>
+                  </p>
+                  <div style={styles.trainingAction}>
+                    <Button
+                      variant="primary"
+                      onClick={() => navigate('/academy')}
+                    >
+                      GO TO PRACTICE
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding: '10px 0' }}>
+                  <p style={styles.trainingDesc}>No practice topics unlocked by the instructor yet.</p>
+                </div>
+              )}
+            </Card>
+          )}
+
           {/* Continue Learning */}
           <Card 
             title="📖 CONTINUE TRAINING" 
@@ -237,6 +287,29 @@ export function DashboardPage() {
                 <span style={styles.completionVal}>{stats.completedCourses}</span>
                 <span style={styles.completionLbl}>🎓 Courses Done</span>
               </div>
+            </div>
+          </Card>
+
+          {/* Current Plan */}
+          <Card
+            title="💎 CURRENT PLAN"
+            subtitle="SUBSCRIPTION STATUS"
+          >
+            <div style={styles.planInfo}>
+              <span style={isPremium ? styles.planNamePremium : styles.planNameFree}>
+                {planDisplayName}
+              </span>
+              {isPremium ? (
+                <span style={styles.planActiveBadge}>● ACTIVE</span>
+              ) : (
+                <Button
+                  variant="outline"
+                  style={styles.planUpgradeBtn}
+                  onClick={() => navigate('/profile')}
+                >
+                  ⭐ Upgrade Plan
+                </Button>
+              )}
             </div>
           </Card>
 
@@ -528,6 +601,32 @@ const styles = {
     fontSize: '0.7rem',
     color: 'var(--color-text-muted)',
     fontFamily: 'var(--font-family-mono)',
+  },
+  planInfo: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '12px',
+  },
+  planNamePremium: {
+    fontSize: 'var(--font-size-lg)',
+    fontWeight: 'var(--font-weight-bold)' as const,
+    color: 'var(--color-primary)',
+  },
+  planNameFree: {
+    fontSize: 'var(--font-size-lg)',
+    fontWeight: 'var(--font-weight-bold)' as const,
+    color: 'var(--color-text-secondary)',
+  },
+  planActiveBadge: {
+    fontSize: 'var(--font-size-xs)',
+    color: 'var(--color-primary)',
+    fontFamily: 'var(--font-family-mono)',
+    letterSpacing: '1px',
+  },
+  planUpgradeBtn: {
+    width: '100%',
+    borderColor: 'rgba(255, 179, 0, 0.35)',
+    color: 'rgba(255, 179, 0, 0.9)',
   },
   completionGrid: {
     display: 'grid',

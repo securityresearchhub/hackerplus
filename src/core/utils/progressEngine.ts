@@ -7,6 +7,7 @@ export interface UserProgress {
   level: number;
   rank: string;
   streak: number;
+  learningCredits: number;
   completedLabs: string[];
   completedChallenges: string[];
   completedCourses: string[];
@@ -42,11 +43,15 @@ function resolveRank(xp: number): string {
 export function loadProgress(): UserProgress {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...defaultProgress } as UserProgress;
-    return JSON.parse(raw) as UserProgress;
+    if (!raw) return { learningCredits: 0, ...defaultProgress } as UserProgress;
+    const parsed = JSON.parse(raw);
+    return {
+      learningCredits: 0,
+      ...parsed,
+    } as UserProgress;
   } catch (err) {
     console.error('Failed to parse user progress storage. Resetting.', err);
-    return { ...defaultProgress } as UserProgress;
+    return { learningCredits: 0, ...defaultProgress } as UserProgress;
   }
 }
 
@@ -150,44 +155,44 @@ export function unlockBadge(progress: UserProgress, badgeId: string, xpReward = 
 /**
  * Complete a Lab event wrapper.
  */
-export function completeLab(progress: UserProgress, labId: string, xpReward: number): UserProgress {
+export function completeLab(progress: UserProgress, labId: string, _xpReward?: number): UserProgress {
   if (progress.completedLabs.includes(labId)) return progress;
 
-  let updated = {
+  const updated = {
     ...progress,
     completedLabs: [...progress.completedLabs, labId],
   };
 
-  updated = updateXp(updated, xpReward);
+  saveProgress(updated);
   return updated;
 }
 
 /**
  * Complete a Challenge event wrapper.
  */
-export function completeChallenge(progress: UserProgress, challengeId: string, xpReward: number): UserProgress {
+export function completeChallenge(progress: UserProgress, challengeId: string, _xpReward?: number): UserProgress {
   if (progress.completedChallenges.includes(challengeId)) return progress;
 
-  let updated = {
+  const updated = {
     ...progress,
     completedChallenges: [...progress.completedChallenges, challengeId],
   };
 
-  updated = updateXp(updated, xpReward);
+  saveProgress(updated);
   return updated;
 }
 
 /**
  * Complete a Course event wrapper.
  */
-export function completeCourse(progress: UserProgress, courseId: string, xpReward: number): UserProgress {
+export function completeCourse(progress: UserProgress, courseId: string, _xpReward?: number): UserProgress {
   if (progress.completedCourses.includes(courseId)) return progress;
 
-  let updated = {
+  const updated = {
     ...progress,
     completedCourses: [...progress.completedCourses, courseId],
   };
 
-  updated = updateXp(updated, xpReward);
+  saveProgress(updated);
   return updated;
 }

@@ -18,6 +18,13 @@ export function ChallengesPage() {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
+  // Resolve Batch and Today's Practice for Instructor-Led Training (HP-030.1)
+  const session = SessionEngine.getCurrentSession().session;
+  const username = session.username;
+  const userBatch = SessionEngine.getBatches().find(b => b.studentUsernames.includes(username));
+  const todayPractice = userBatch ? SessionEngine.getTodayPractice(userBatch.id) : null;
+  const activeTopic = todayPractice?.topic;
+
   React.useEffect(() => {
     return SessionEngine.subscribe(() => {
       setChallenges(SessionEngine.getChallengesCatalog());
@@ -25,11 +32,17 @@ export function ChallengesPage() {
   }, []);
 
   // Filter logic
-  const filteredMissions = challenges.filter(ch => {
+  let filteredMissions = challenges.filter(ch => {
     const matchesSearch = ch.title.toLowerCase().includes(search.toLowerCase());
     const matchesCat = !selectedCat || ch.category === selectedCat;
     return matchesSearch && matchesCat;
   });
+
+  // If in an active batch with today's topic, filter challenges to only show today's topic challenges
+  if (userBatch && activeTopic) {
+    const todayChallengeIds = activeTopic.challenges.map(c => c.id);
+    filteredMissions = filteredMissions.filter(ch => todayChallengeIds.includes(ch.id));
+  }
 
   const handleStartMission = (challengeId: string) => {
     SessionEngine.startChallenge(challengeId);
@@ -63,6 +76,18 @@ export function ChallengesPage() {
 
   return (
     <div style={styles.container}>
+      {/* ILT Banner */}
+      {userBatch && activeTopic && (
+        <div style={styles.iltBanner}>
+          <span style={styles.iltBannerLabel}>⚡ INSTRUCTOR-LED LIVE MISSION</span>
+          <h4 style={styles.iltBannerTitle}>
+            Today's Target Topic: <strong>{activeTopic.title}</strong>
+          </h4>
+          <p style={styles.iltBannerDesc}>
+            Displaying only the security operations assigned for today's training in {userBatch.name}.
+          </p>
+        </div>
+      )}
       {/* Search and Category filters */}
       <div style={styles.filterCard}>
         <Input
@@ -98,13 +123,20 @@ export function ChallengesPage() {
           {filteredMissions.length > 0 ? (
             filteredMissions.map((ch, index) => {
               const difficultyStyle = ch.difficulty.toLowerCase() as keyof typeof styles;
+              const isPremiumLocked = ch.premiumLocked;
+              const isProgLocked = !isPremiumLocked && ch.locked;
+              const cardStyle = isPremiumLocked ? styles.cardPremiumLocked : isProgLocked ? styles.cardLocked : styles.cardActive;
+              const statusText = isPremiumLocked ? 'PREMIUM' : ch.completed ? 'SOLVED' : isProgLocked ? 'LOCKED' : 'AVAILABLE';
+              const statusStyle = isPremiumLocked ? styles.premiumText : ch.completed ? styles.completedText : styles.pendingText;
+              const btnLabel = isPremiumLocked ? '⭐ UPGRADE TO UNLOCK' : isProgLocked ? '🔒 DECRYPT STAGE FIRST' : ch.completed ? 'REPLAY MISSION' : 'START MISSION';
+              const btnVariant = (ch.completed && !isPremiumLocked) ? 'secondary' : (isProgLocked || isPremiumLocked) ? 'outline' : 'primary';
               return (
                 <Card
                   key={ch.id}
-                  title={`MISSION ${index + 1}: ${ch.title}`}
-                  subtitle={`${ch.category} • Est: ${ch.duration}`}
-                  hoverGlow={!ch.locked}
-                  style={ch.locked ? styles.cardLocked : styles.cardActive}
+                  title={isPremiumLocked ? `🔒 PREMIUM MISSION ${index + 1}` : `MISSION ${index + 1}: ${ch.title}`}
+                  subtitle={isPremiumLocked ? 'Upgrade your plan to access this mission' : `${ch.category} • Est: ${ch.duration}`}
+                  hoverGlow={!isProgLocked && !isPremiumLocked}
+                  style={cardStyle}
                   extra={
                     <span style={{ ...styles.badge, ...styles[difficultyStyle] }}>
                       {ch.difficulty}
@@ -114,23 +146,21 @@ export function ChallengesPage() {
                   <div style={styles.metaRow}>
                     <div style={styles.metaItem}>
                       <span style={styles.metaLabel}>REWARD:</span>
-                      <span style={styles.metaVal}>{ch.xp} XP</span>
+                      <span style={styles.metaVal}>{isPremiumLocked ? '⭐' : `${ch.xp} XP`}</span>
                     </div>
                     <div style={styles.metaItem}>
                       <span style={styles.metaLabel}>STATUS:</span>
-                      <span style={ch.completed ? styles.completedText : styles.pendingText}>
-                        {ch.completed ? 'SOLVED' : ch.locked ? 'LOCKED' : 'AVAILABLE'}
-                      </span>
+                      <span style={statusStyle}>{statusText}</span>
                     </div>
                   </div>
                   <div style={{ marginTop: '15px' }}>
                     <Button
-                      variant={ch.completed ? 'secondary' : ch.locked ? 'outline' : 'primary'}
-                      disabled={ch.locked}
-                      style={{ width: '100%' }}
-                      onClick={() => ch.completed ? handleReplayMission(ch.id) : handleStartMission(ch.id)}
+                      variant={btnVariant}
+                      disabled={isProgLocked || isPremiumLocked}
+                      style={{ width: '100%', ...(isPremiumLocked ? styles.premiumBtn : {}) }}
+                      onClick={() => !isPremiumLocked && (ch.completed ? handleReplayMission(ch.id) : handleStartMission(ch.id))}
                     >
-                      {ch.locked ? '🔒 DECRYPT STAGE FIRST' : ch.completed ? 'REPLAY MISSION' : 'START MISSION'}
+                      {btnLabel}
                     </Button>
                   </div>
                 </Card>
@@ -212,6 +242,20 @@ const styles = {
     borderColor: 'rgba(255,255,255,0.02)',
     boxShadow: 'none',
   },
+  cardPremiumLocked: {
+    opacity: 0.8,
+    borderColor: 'rgba(255, 179, 0, 0.25)',
+    boxShadow: '0 0 12px rgba(255, 179, 0, 0.06)',
+  },
+  premiumText: {
+    color: 'var(--color-warning)',
+    fontWeight: 'var(--font-weight-bold)' as const,
+  },
+  premiumBtn: {
+    borderColor: 'rgba(255, 179, 0, 0.35)',
+    color: 'rgba(255, 179, 0, 0.85)',
+    cursor: 'default' as const,
+  },
   metaRow: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -273,5 +317,32 @@ const styles = {
     fontSize: '3rem',
     marginBottom: '15px',
     display: 'block',
+  },
+  iltBanner: {
+    backgroundColor: 'rgba(0, 230, 118, 0.05)',
+    border: '1px solid rgba(0, 230, 118, 0.2)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '16px 20px',
+    marginBottom: '8px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  iltBannerLabel: {
+    fontFamily: 'var(--font-family-mono)',
+    fontSize: 'var(--font-size-xs)',
+    color: 'var(--color-primary)',
+    fontWeight: 'var(--font-weight-bold)',
+    letterSpacing: '1px',
+  },
+  iltBannerTitle: {
+    fontSize: 'var(--font-size-md)',
+    color: 'var(--color-text-primary)',
+    margin: 0,
+  },
+  iltBannerDesc: {
+    fontSize: 'var(--font-size-xs)',
+    color: 'var(--color-text-muted)',
+    margin: 0,
   },
 };

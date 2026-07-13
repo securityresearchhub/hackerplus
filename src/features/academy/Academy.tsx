@@ -10,6 +10,11 @@ export function AcademyPage() {
   const [session, setSession] = useState(() => SessionEngine.getCurrentSession());
   const courses = SessionEngine.getCourseCatalog();
 
+  // Resolve Batch and Unlocked Topics for Instructor-Led Training (HP-030.1)
+  const username = session.username;
+  const userBatch = SessionEngine.getBatches().find(b => b.studentUsernames.includes(username));
+  const unlockedTopics = userBatch ? SessionEngine.getUnlockedTopics(userBatch.id) : [];
+
   React.useEffect(() => {
     return SessionEngine.subscribe(() => {
       setSession(SessionEngine.getCurrentSession());
@@ -91,6 +96,124 @@ export function AcademyPage() {
     setActiveCourseId(courseId);
     navigate('/labs');
   };
+
+  // Instructor-Led Training (ILT) Dashboard (HP-030.1)
+  if (userBatch) {
+    return (
+      <div style={styles.container}>
+        {/* Active Classroom Banner */}
+        <div style={styles.banner}>
+          <div style={styles.bannerText}>
+            <span style={styles.bannerAlert}>INSTRUCTOR-LED TRAINING // ACTIVE CLASSROOM</span>
+            <h2 style={styles.bannerTitle}>{userBatch.name}</h2>
+            <p style={styles.bannerQuote}>
+              Instructor: <strong>@{userBatch.instructorUsername}</strong> | Term: <strong>{userBatch.startDate} to {userBatch.endDate}</strong>
+            </p>
+          </div>
+        </div>
+
+        {/* Unlocked Topics Pathway */}
+        <div style={styles.stageProgress}>
+          <h4 style={styles.sectionHeader}>UNLOCKED TRAINING TOPICS ({unlockedTopics.length})</h4>
+          {unlockedTopics.length > 0 ? (
+            <div style={styles.topicsListGrid}>
+              {unlockedTopics.map(topic => {
+                const isCompleted = topic.completed;
+                return (
+                  <Card
+                    key={topic.id}
+                    title={topic.title}
+                    subtitle={`${topic.difficulty} • Est. ${topic.estimatedMinutes} mins`}
+                    hoverGlow={!isCompleted}
+                    style={isCompleted ? styles.topicCardCompleted : styles.topicCardActive}
+                  >
+                    <div style={styles.topicMetaRow}>
+                      <div style={styles.topicMetaItem}>
+                        <span style={styles.topicMetaLabel}>REWARD:</span>
+                        <span style={styles.topicMetaVal}>{topic.xp} XP</span>
+                      </div>
+                      <div style={styles.topicMetaItem}>
+                        <span style={styles.topicMetaLabel}>STATUS:</span>
+                        <span style={isCompleted ? styles.statusSuccess : styles.statusPending}>
+                          {isCompleted ? 'SOLVED' : 'IN PROGRESS'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={styles.requirementsList}>
+                      {topic.labs.length > 0 && (
+                        <div style={styles.requirementItem}>
+                          <span>🧪 Labs: {topic.labs.map(l => l.title).join(', ')}</span>
+                          <span style={topic.progress.labCompleted ? styles.reqDone : styles.reqPending}>
+                            {topic.progress.labCompleted ? '✓ Done' : '○ Unsolved'}
+                          </span>
+                        </div>
+                      )}
+                      {topic.quiz.length > 0 && (
+                        <div style={styles.requirementItem}>
+                          <span>📝 Quiz: {topic.quiz.length} questions (Pass: 70%)</span>
+                          <span style={topic.progress.quizPassed ? styles.reqDone : styles.reqPending}>
+                            {topic.progress.quizPassed ? `✓ Done (${topic.progress.quizScore}%)` : '○ Unsolved'}
+                          </span>
+                        </div>
+                      )}
+                      {topic.challenges.length > 0 && (
+                        <div style={styles.requirementItem}>
+                          <span>🚩 Challenges: {topic.challenges.map(c => c.title).join(', ')}</span>
+                          <span style={topic.progress.challengeCompleted ? styles.reqDone : styles.reqPending}>
+                            {topic.progress.challengeCompleted ? '✓ Done' : '○ Unsolved'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={styles.topicActions}>
+                      {topic.labs.length > 0 && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate('/labs')}
+                          style={{ flex: 1 }}
+                        >
+                          GO TO LABS
+                        </Button>
+                      )}
+                      {topic.challenges.length > 0 && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => navigate('/challenges')}
+                          style={{ flex: 1 }}
+                        >
+                          GO TO MISSIONS
+                        </Button>
+                      )}
+                      {!isCompleted && topic.requiredItems.length === 0 && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => SessionEngine.completeTopic(topic.id)}
+                          style={{ width: '100%' }}
+                        >
+                          MARK COMPLETE
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={styles.emptyState}>
+              <span style={styles.emptyIcon}>🛰️</span>
+              <h5>Waiting for instructor to unlock today's target</h5>
+              <p>Your instructor has not unlocked any topics for this batch yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -481,5 +604,108 @@ const styles = {
     fontSize: '3rem',
     marginBottom: '15px',
     display: 'block',
+  },
+  banner: {
+    background: 'linear-gradient(135deg, #0f1422 0%, #151c2e 100%)',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '30px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    position: 'relative' as const,
+    overflow: 'hidden',
+  },
+  bannerText: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
+    zIndex: 2,
+  },
+  bannerAlert: {
+    fontFamily: 'var(--font-family-mono)',
+    fontSize: 'var(--font-size-xs)',
+    color: 'var(--color-primary)',
+    fontWeight: 'var(--font-weight-semibold)',
+    letterSpacing: '1.5px',
+  },
+  bannerTitle: {
+    fontSize: 'var(--font-size-2xl)',
+    color: 'var(--color-text-primary)',
+    margin: 0,
+    fontWeight: 'var(--font-weight-bold)',
+  },
+  bannerQuote: {
+    color: 'var(--color-text-muted)',
+    fontSize: 'var(--font-size-sm)',
+    margin: '5px 0 0 0',
+  },
+  stageProgress: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    marginTop: '15px',
+  },
+  topicsListGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '20px',
+  },
+  topicCardActive: {
+    opacity: 1,
+  },
+  topicCardCompleted: {
+    opacity: 0.85,
+    borderColor: 'var(--color-primary)',
+  },
+  topicMetaRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    borderTop: '1px solid rgba(255,255,255,0.03)',
+    borderBottom: '1px solid rgba(255,255,255,0.03)',
+    padding: '12px 0',
+    fontSize: 'var(--font-size-xs)',
+    fontFamily: 'var(--font-family-mono)',
+  },
+  topicMetaItem: {
+    display: 'flex',
+    gap: '6px',
+  },
+  topicMetaLabel: {
+    color: 'var(--color-text-muted)',
+  },
+  topicMetaVal: {
+    color: 'var(--color-text-secondary)',
+  },
+  statusSuccess: {
+    color: 'var(--color-primary)',
+    fontWeight: 'var(--font-weight-bold)' as const,
+  },
+  statusPending: {
+    color: 'var(--color-text-muted)',
+  },
+  requirementsList: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
+    margin: '15px 0',
+    fontSize: 'var(--font-size-xs)',
+  },
+  requirementItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: 'var(--color-text-secondary)',
+  },
+  reqDone: {
+    color: 'var(--color-primary)',
+    fontWeight: 'var(--font-weight-semibold)' as const,
+  },
+  reqPending: {
+    color: 'var(--color-text-muted)',
+  },
+  topicActions: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '15px',
   },
 };

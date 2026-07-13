@@ -8,10 +8,24 @@ import { SessionEngine } from '../../core/utils/sessionEngine';
 export function ProfilePage() {
   // Local profile state synced with SessionEngine
   const [profile, setProfile] = useState(() => SessionEngine.getUserProfile());
+  const [entitlement, setEntitlement] = useState(() => SessionEngine.getEntitlementState());
+
+  const PLAN_NAMES: Record<string, string> = {
+    community: 'Community',
+    student_premium: 'Student Premium',
+    partner_premium: 'Partner Premium',
+    enterprise: 'Enterprise',
+  };
+
+  const formatDate = (iso: string | null): string => {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
 
   React.useEffect(() => {
     return SessionEngine.subscribe(() => {
       setProfile(SessionEngine.getUserProfile());
+      setEntitlement(SessionEngine.getEntitlementState());
     });
   }, []);
 
@@ -56,6 +70,24 @@ export function ProfilePage() {
             <div style={styles.metaItem}>
               <span style={styles.metaLabel}>Enlisted:</span>
               <span style={styles.metaValue}>📅 {profile.joinedDate}</span>
+            </div>
+            <div style={styles.metaItem}>
+              <span style={styles.metaLabel}>Plan:</span>
+              <span style={{ ...styles.metaValue, color: entitlement.plan !== 'community' ? 'var(--color-primary)' : undefined }}>
+                💎 {PLAN_NAMES[entitlement.plan] ?? entitlement.plan}
+              </span>
+            </div>
+            <div style={styles.metaItem}>
+              <span style={styles.metaLabel}>Activated:</span>
+              <span style={styles.metaValue}>
+                {entitlement.activatedAt ? `📅 ${formatDate(entitlement.activatedAt)}` : '—'}
+              </span>
+            </div>
+            <div style={styles.metaItem}>
+              <span style={styles.metaLabel}>Expires:</span>
+              <span style={styles.metaValue}>
+                {entitlement.expiresAt ? `📅 ${formatDate(entitlement.expiresAt)}` : 'Never'}
+              </span>
             </div>
           </div>
 

@@ -6,6 +6,7 @@
 import { loadProgress, saveProgress } from './progressEngine';
 import { restoreSessionState, saveSessionState } from './autoSaveEngine';
 import { LabSessionService, type LabSessionStatus } from './labSessionService';
+import { EntitlementEngine } from './entitlementEngine';
 import labsConfig from '../../../data/labs.json';
 
 export interface LabInfo {
@@ -16,7 +17,10 @@ export interface LabInfo {
   duration: string;
   xp: number;
   completed: boolean;
+  /** Progression lock — previous lab not yet completed */
   locked: boolean;
+  /** Entitlement lock — requires a paid plan to access */
+  premiumLocked: boolean;
   inProgress: boolean;
   targetIp?: string;
   targetUrl?: string;
@@ -27,10 +31,16 @@ export const LabEngine = {
    * Retrieves the dynamic labs catalog with lock overrides and progress status mapping.
    * Locked levels mask titles and categories to keep vulnerability details hidden.
    */
+  /** Returns the ordered list of all lab IDs. Used by SessionEngine for entitlement checks. */
+  allLabIds(): string[] {
+    return (labsConfig as any[]).map(l => l.id);
+  },
+
   getLabs(): LabInfo[] {
     const progress = loadProgress();
     const session = restoreSessionState();
     const completedList = progress.completedLabs || [];
+    const ids = this.allLabIds();
 
     return (labsConfig as any[]).map((lab, idx) => {
       // Progression lock logic: a level remains locked until the preceding level is completed
@@ -39,6 +49,9 @@ export const LabEngine = {
         const prevLab = labsConfig[idx - 1];
         locked = !completedList.includes(prevLab.id);
       }
+
+      // Entitlement lock — plan-based access gate (independent of progression)
+      const premiumLocked = !EntitlementEngine.canAccessLab(lab.id, ids);
 
       const completed = completedList.includes(lab.id);
       const inProgress = session.currentLabId === lab.id;
@@ -49,6 +62,7 @@ export const LabEngine = {
           title: `🔒 Decrypt Level ${idx + 1} Target`,
           category: 'Encrypted Level',
           locked: true,
+          premiumLocked,
           completed: false,
           inProgress: false,
         };
@@ -57,6 +71,7 @@ export const LabEngine = {
       return {
         ...lab,
         locked: false,
+        premiumLocked,
         completed,
         inProgress,
         // Surface the real API-assigned URL if this lab is currently active
