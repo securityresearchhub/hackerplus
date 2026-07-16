@@ -20,6 +20,9 @@ import type { RewardHistoryEntry } from './rewardEngine';
 import { PermissionEngine } from './permissionEngine';
 import type { RoleName } from '../../data/roles';
 import type { Permission } from '../../data/permissions';
+import { AdminEngine } from './adminEngine';
+import type { AdminUserRecord, AdminContentFlag, AdminBatchSummary, AdminAnalytics } from './adminEngine';
+import type { AuditEntry } from './adminAuditEngine';
 import badgesConfig from '../../../data/badges.json';
 import coursesConfig from '../../../data/courses.json';
 import labsConfig from '../../../data/labs.json';
@@ -31,6 +34,7 @@ export type { Plan, Feature, EntitlementState, UpgradePrompt, SetPlanOptions };
 export type { UnlockedTopicInfo, TodayPractice, BatchInfo };
 export type { RewardHistoryEntry };
 export type { RoleName, Permission };
+export type { AdminUserRecord, AdminContentFlag, AdminBatchSummary, AdminAnalytics, AuditEntry };
 
 export interface AuthResponse {
   success: boolean;
@@ -757,6 +761,126 @@ export const SessionEngine = {
   /** Returns all permissions mapped to a role name. */
   getPermissions(role: RoleName): Permission[] {
     return PermissionEngine.getPermissions(role);
+  },
+
+  // ── Admin Platform (HP-035) ────────────────────────────────────────────────
+
+  /** Lists all platform users visible to the admin. */
+  adminListUsers(): AdminUserRecord[] {
+    const { session } = loadCompleteSession();
+    return AdminEngine.listUsers(session.username);
+  },
+
+  /** Suspends a user account by callsign. */
+  adminSuspendUser(username: string): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.suspendUser(session.username, username);
+    this.notifyChange();
+  },
+
+  /** Lifts a suspension from a user account by callsign. */
+  adminUnsuspendUser(username: string): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.unsuspendUser(session.username, username);
+    this.notifyChange();
+  },
+
+  /** Assigns a system role to a user callsign (admin-initiated). */
+  adminAssignRole(username: string, role: RoleName): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.assignUserRole(session.username, username, role);
+    this.notifyChange();
+  },
+
+  /** Resets a user's progress data. */
+  adminResetUserProgress(username: string): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.resetUserProgress(session.username, username);
+    this.notifyChange();
+  },
+
+  /** Overrides a user's premium plan assignment. */
+  adminOverridePlan(username: string, plan: Plan, expiresAt?: string): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.overridePlan(session.username, username, plan, expiresAt);
+    this.notifyChange();
+  },
+
+  /** Revokes premium access and resets user to free community plan. */
+  adminRevokePremium(username: string): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.revokePremium(session.username, username);
+    this.notifyChange();
+  },
+
+  /** Enables or disables a course by ID. */
+  adminSetCourseEnabled(courseId: string, enabled: boolean): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.setCourseEnabled(session.username, courseId, enabled);
+    this.notifyChange();
+  },
+
+  /** Returns list of all course enable/disable flags. */
+  adminListCourseFlags(): AdminContentFlag[] {
+    const { session } = loadCompleteSession();
+    return AdminEngine.listCourseFlags(session.username);
+  },
+
+  /** Enables or disables a lab by ID. */
+  adminSetLabEnabled(labId: string, enabled: boolean): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.setLabEnabled(session.username, labId, enabled);
+    this.notifyChange();
+  },
+
+  /** Returns list of all lab enable/disable flags. */
+  adminListLabFlags(): AdminContentFlag[] {
+    const { session } = loadCompleteSession();
+    return AdminEngine.listLabFlags(session.username);
+  },
+
+  /** Enables or disables a challenge by ID. */
+  adminSetChallengeEnabled(challengeId: string, enabled: boolean): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.setChallengeEnabled(session.username, challengeId, enabled);
+    this.notifyChange();
+  },
+
+  /** Returns list of all challenge enable/disable flags. */
+  adminListChallengeFlags(): AdminContentFlag[] {
+    const { session } = loadCompleteSession();
+    return AdminEngine.listChallengeFlags(session.username);
+  },
+
+  /** Lists all learning batches. */
+  adminListBatches(): AdminBatchSummary[] {
+    const { session } = loadCompleteSession();
+    return AdminEngine.listBatches(session.username);
+  },
+
+  /** Archives a batch by ID. */
+  adminArchiveBatch(batchId: string): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.archiveBatch(session.username, batchId);
+    this.notifyChange();
+  },
+
+  /** Returns aggregated platform analytics snapshot. */
+  adminGetAnalytics(): AdminAnalytics {
+    const { session } = loadCompleteSession();
+    return AdminEngine.getAnalytics(session.username);
+  },
+
+  /** Returns the full admin audit log (newest first). */
+  adminGetAuditLog(): AuditEntry[] {
+    const { session } = loadCompleteSession();
+    return AdminEngine.getAuditLog(session.username);
+  },
+
+  /** Clears the audit log — Super Admin only. */
+  adminClearAuditLog(): void {
+    const { session } = loadCompleteSession();
+    AdminEngine.clearAuditLog(session.username);
   },
 };
 

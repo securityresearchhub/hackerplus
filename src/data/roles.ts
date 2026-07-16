@@ -2,6 +2,7 @@
  * roles.ts
  * Links roles (Student, Instructor, Partner, Admin, Super Admin)
  * to their respective permission capabilities.
+ * HP-035: Admin & Super Admin expanded with granular admin permissions.
  */
 import { Permission } from './permissions';
 
@@ -41,6 +42,14 @@ export const ROLES: Record<RoleName, Role> = {
       'unlock:topics',
       'assign:roles',
       'admin:settings',
+      'admin:manage_users',
+      'admin:manage_courses',
+      'admin:manage_batches',
+      'admin:manage_labs',
+      'admin:manage_challenges',
+      'admin:manage_premium',
+      'admin:view_analytics',
+      'admin:view_audit_logs',
     ],
   },
   'Super Admin': {
@@ -54,7 +63,16 @@ export const ROLES: Record<RoleName, Role> = {
       'assign:roles',
       'admin:settings',
       'admin:billing',
+      'admin:manage_users',
+      'admin:manage_courses',
+      'admin:manage_batches',
+      'admin:manage_labs',
+      'admin:manage_challenges',
+      'admin:manage_premium',
+      'admin:view_analytics',
+      'admin:view_audit_logs',
       'superadmin:all',
     ],
   },
 };
+
