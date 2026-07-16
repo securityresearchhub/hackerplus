@@ -11,7 +11,7 @@ export interface ProvisionResult {
 
 export interface LabProvider {
   /** Spin up a new isolated instance for the given lab image config. */
-  start(labId: string, labSessionId: string): Promise<ProvisionResult>;
+  start(labId: string, labSessionId: string, envVars?: string[]): Promise<ProvisionResult>;
   /** Terminate an active instance. */
   stop(containerId: string): Promise<void>;
   /** Check the current runtime status of an instance. */

@@ -27,7 +27,7 @@ const LAB_PORT_MAP: Record<string, number> = {
 };
 
 export const MockProvider: LabProvider = {
-  async start(labId: string, labSessionId: string): Promise<ProvisionResult> {
+  async start(labId: string, labSessionId: string, envVars?: string[]): Promise<ProvisionResult> {
     // Simulate container cold-start time (1.5s)
     await new Promise(resolve => setTimeout(resolve, 1500));
 

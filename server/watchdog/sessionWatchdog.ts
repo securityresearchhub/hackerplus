@@ -4,10 +4,10 @@
  */
 import { LabOrchestrator } from '../services/labOrchestrator.js';
 
-const SWEEP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+const SWEEP_INTERVAL_MS = 60 * 1000; // every 60 seconds
 
 export function startWatchdog(): NodeJS.Timeout {
-  console.log('[SessionWatchdog] Started — sweeping every 5 minutes.');
+  console.log('[SessionWatchdog] Started — sweeping every 60 seconds.');
 
   return setInterval(async () => {
     try {

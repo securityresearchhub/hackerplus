@@ -17,13 +17,14 @@ export interface LabSession {
   terminatedAt: string | null;
 }
 
-const DEFAULT_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+import { dockerConfig } from '../config/docker.js';
 
 class LabRegistryClass {
   private sessions = new Map<string, LabSession>();
 
   create(labSessionId: string, labId: string, userId: string): LabSession {
     const now = new Date();
+    const ttlMs = (dockerConfig.containerTtlSeconds || 7200) * 1000;
     const session: LabSession = {
       labSessionId,
       labId,
@@ -32,7 +33,7 @@ class LabRegistryClass {
       containerId: null,
       labUrl: null,
       startedAt: now.toISOString(),
-      expiresAt: new Date(now.getTime() + DEFAULT_TTL_MS).toISOString(),
+      expiresAt: new Date(now.getTime() + ttlMs).toISOString(),
       terminatedAt: null,
     };
     this.sessions.set(labSessionId, session);

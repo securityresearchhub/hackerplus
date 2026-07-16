@@ -14,16 +14,16 @@
   },
   {
     "id": "lab2",
-    "title": "Metasploit Pivot Through Internal Subnet",
-    "category": "Network Security",
-    "difficulty": "Intermediate",
-    "duration": "1.5h",
-    "xp": 300,
+    "title": "IDOR — Employee Portal Access Control Bypass",
+    "category": "Web Security",
+    "difficulty": "Beginner",
+    "duration": "25m",
+    "xp": 150,
     "completed": false,
     "featured": true,
     "recommended": true,
     "recent": false,
-    "inProgress": true
+    "inProgress": false
   },
   {
     "id": "lab3",

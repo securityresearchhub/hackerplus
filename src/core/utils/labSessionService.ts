@@ -102,6 +102,31 @@ export const LabSessionService = {
       throw new Error(err.error ?? 'Failed to stop session.');
     }
   },
+
+  /**
+   * Submits a flag for verification.
+   */
+  async submitFlag(labSessionId: string, flag: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE}/${labSessionId}/flag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ flag }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Flag submission failed.' }));
+      return { success: false, message: err.message || err.error || 'Flag submission failed.' };
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Polls the status of an active session.
+   */
+  async pollStatus(labSessionId: string): Promise<LabSessionStatus> {
+    return this.getSessionStatus(labSessionId);
+  },
 };
 
 export default LabSessionService;

@@ -6,7 +6,7 @@ const CHALLENGE_FLAGS: { [id: string]: string } = {
 
 const LAB_FLAGS: { [id: string]: string } = {
   lab1: 'hp_flag{sql_login_bypass_728}',
-  lab2: 'hp_flag{metasploit_pivot_937}',
+  lab2: 'hp_flag{idor_access_control_937}',
   lab3: 'hp_flag{suid_priv_esc_219}',
 };
 

@@ -85,8 +85,22 @@ labRouter.post('/:labSessionId/stop', async (req: Request, res: Response) => {
 
 /**
  * POST /api/lab/:labSessionId/flag
- * Server-side flag validation (Phase 4 — currently returns not implemented).
+ * Server-side flag validation.
  */
-labRouter.post('/:labSessionId/flag', (req: Request, res: Response) => {
-  res.status(501).json({ error: 'Server-side flag validation not yet implemented. Use client-side FlagEngine.' });
+labRouter.post('/:labSessionId/flag', async (req: Request, res: Response) => {
+  const { labSessionId } = req.params;
+  const { flag } = req.body as { flag?: string };
+
+  if (!flag) {
+    res.status(400).json({ error: 'Flag value is required.' });
+    return;
+  }
+
+  try {
+    const result = await LabOrchestrator.submitFlag(labSessionId, flag);
+    // Return 200 OK so the frontend gets a clean { success, message } response
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Internal error during flag validation.' });
+  }
 });

@@ -113,6 +113,11 @@ export const LabEngine = {
         activeLabUrl: startResult.labUrl,
         activeLabExpiresAt: startResult.expiresAt ?? null,
       });
+      try {
+        window.open(startResult.labUrl, '_blank');
+      } catch (e) {
+        console.warn('[LabEngine] Popup blocked: could not auto-open lab URL.', e);
+      }
       return labSessionId;
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -141,6 +146,11 @@ export const LabEngine = {
         activeLabUrl: finalStatus.labUrl,
         activeLabExpiresAt: finalStatus.expiresAt,
       });
+      try {
+        window.open(finalStatus.labUrl, '_blank');
+      } catch (e) {
+        console.warn('[LabEngine] Popup blocked: could not auto-open lab URL.', e);
+      }
     }
 
     return labSessionId;

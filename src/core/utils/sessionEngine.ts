@@ -5,7 +5,7 @@ import { ChallengeEngine, ChallengeInfo } from './challengeEngine';
 import { FlagEngine } from './flagEngine';
 import { LabEngine } from './labEngine';
 import { AuthService } from '../../services/authService';
-import type { LabSessionStatus } from './labSessionService';
+import { LabSessionService, type LabSessionStatus } from './labSessionService';
 import { PracticeEngine } from './practiceEngine';
 import type { ModuleInfo, LessonWithPractice, PracticeLabRef, PracticeChallengeRef, QuizQuestion } from './practiceEngine';
 import { TopicEngine } from './topicEngine';
@@ -489,8 +489,30 @@ export const SessionEngine = {
   /**
    * Submits a lab flag for verification. Coordinates state updates and XP allocation if verified.
    */
-  submitLabFlag(labId: string, flag: string): { success: boolean; message: string } {
-    const validation = FlagEngine.validateLabFlag(labId, flag);
+  async submitLabFlag(labId: string, flag: string): Promise<{ success: boolean; message: string }> {
+    const session = restoreSessionState();
+    
+    // If there is no active server-side session (fallback or Mock mode bypass)
+    if (!session.activeLabSessionId) {
+      const validation = FlagEngine.validateLabFlag(labId, flag);
+      if (validation.success) {
+        const progress = loadProgress();
+        const isAlreadyCompleted = progress.completedLabs.includes(labId);
+
+        if (!isAlreadyCompleted) {
+          const labConfig = labsConfig.find(l => l.id === labId);
+          const xpReward = labConfig ? labConfig.xp : 0;
+          RewardEngine.awardLabCompletion(labId, xpReward);
+        }
+
+        await LabEngine.terminateLab(labId);
+        this.notifyChange();
+      }
+      return validation;
+    }
+
+    // Call server-side flag validation API
+    const validation = await LabSessionService.submitFlag(session.activeLabSessionId, flag);
 
     if (validation.success) {
       const progress = loadProgress();
@@ -502,8 +524,13 @@ export const SessionEngine = {
         RewardEngine.awardLabCompletion(labId, xpReward);
       }
 
-      // Terminate container and clear active session
-      LabEngine.terminateLab(labId);
+      // Clear the local state (server has already destroyed the container on successful flag)
+      saveSessionState({
+        currentLabId: null,
+        activeLabSessionId: null,
+        activeLabUrl: null,
+        activeLabExpiresAt: null,
+      });
       this.notifyChange();
     }
 
